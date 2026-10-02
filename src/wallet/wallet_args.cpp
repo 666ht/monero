@@ -70,15 +70,15 @@ namespace wallet_args
   // Create on-demand to prevent static initialization order fiasco issues.
   command_line::arg_descriptor<std::string> arg_generate_from_json()
   {
-    return {"generate-from-json", wallet_args::tr("Generate wallet from JSON format file"), ""};
+    return {"generate-from-json", wallet_args::tr("从 JSON 格式文件生成钱包"), ""};
   }
   command_line::arg_descriptor<std::string> arg_wallet_file()
   {
-    return {"wallet-file", wallet_args::tr("Use wallet <arg>"), ""};
+    return {"wallet-file", wallet_args::tr("使用钱包 <arg>"), ""};
   }
   command_line::arg_descriptor<std::string> arg_password_file()
   {
-    return {"password-file", wallet_args::tr("Wallet password file"), ""};
+    return {"password-file", wallet_args::tr("钱包密码文件"), ""};
   }
 
   const char* tr(const char* str)
@@ -107,9 +107,9 @@ namespace wallet_args
     const command_line::arg_descriptor<std::string> arg_log_level = {"log-level", "0-4 or categories", ""};
     const command_line::arg_descriptor<std::size_t> arg_max_log_file_size = {"max-log-file-size", "Specify maximum log file size [B]", MAX_LOG_FILE_SIZE};
     const command_line::arg_descriptor<std::size_t> arg_max_log_files = {"max-log-files", "Specify maximum number of rotated log files to be saved (no limit by setting to 0)", MAX_LOG_FILES};
-    const command_line::arg_descriptor<uint32_t> arg_max_concurrency = {"max-concurrency", wallet_args::tr("Max number of threads to use for a parallel job"), DEFAULT_MAX_CONCURRENCY};
-    const command_line::arg_descriptor<std::string> arg_log_file = {"log-file", wallet_args::tr("Specify log file"), ""};
-    const command_line::arg_descriptor<std::string> arg_config_file = {"config-file", wallet_args::tr("Config file"), "", true};
+    const command_line::arg_descriptor<uint32_t> arg_max_concurrency = {"max-concurrency", wallet_args::tr("并行任务使用的最大线程数"), DEFAULT_MAX_CONCURRENCY};
+    const command_line::arg_descriptor<std::string> arg_log_file = {"log-file", wallet_args::tr("指定日志文件"), ""};
+    const command_line::arg_descriptor<std::string> arg_config_file = {"config-file", wallet_args::tr("配置文件"), "", true};
 
 
     tools::on_startup();
@@ -120,7 +120,7 @@ namespace wallet_args
 
     epee::string_tools::set_module_name_and_folder(argv[0]);
 
-    po::options_description desc_general(wallet_args::tr("General options"));
+    po::options_description desc_general(wallet_args::tr("常规选项"));
     command_line::add_arg(desc_general, command_line::arg_help);
     command_line::add_arg(desc_general, command_line::arg_version);
 
@@ -143,8 +143,7 @@ namespace wallet_args
       if (command_line::get_arg(vm, command_line::arg_help))
       {
         Print(print) << "Monero '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL;
-        Print(print) << wallet_args::tr("This is the command line monero wallet. It needs to connect to a monero\n"
-												  "daemon to work correctly.") << ENDL;
+        Print(print) << wallet_args::tr("这是 Monero 命令行钱包。需要连接到 Monero 守护进程才能正常工作。") << ENDL;
         Print(print) << wallet_args::tr("Usage:") << ENDL << "  " << usage;
         Print(print) << desc_all;
         should_terminate = true;
@@ -168,7 +167,7 @@ namespace wallet_args
         }
         else
         {
-          MERROR(wallet_args::tr("Can't find config file ") << config);
+          MERROR(wallet_args::tr("找不到配置文件：") << config);
           return false;
         }
       }
@@ -218,9 +217,9 @@ namespace wallet_args
 
     const ssize_t lockable_memory = tools::get_lockable_memory();
     if (lockable_memory >= 0 && lockable_memory < 256 * 4096) // 256 pages -> at least 256 secret keys and other such small/medium objects
-      Print(print) << tr("WARNING: You may not have a high enough lockable memory limit")
+      Print(print) << tr("警告：可锁定内存限制可能不足")
 #ifdef ELPP_OS_UNIX
-        << ", " << tr("see ulimit -l")
+        << ", " << tr("请参见 ulimit -l")
 #endif
         ;
 
