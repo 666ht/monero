@@ -42,12 +42,29 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build python3 pkg-config curl git unzip xz-utils file
+          sudo apt-get install -y build-essential cmake ninja-build ccache python3 pkg-config curl git unzip xz-utils file
+
+      - name: Restore Android ARM64 build cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            build-android-arm64
+            ~/.cache/ccache
+          key: android-arm64-build-${{ github.run_id }}
+          restore-keys: |
+            android-arm64-build-
+
+      - name: Configure ccache
+        run: |
+          ccache --set-config=max_size=2G
+          ccache --zero-stats
+          echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
+          echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> "$GITHUB_ENV"
 
       - name: Build Android ARM64 dependencies
         working-directory: contrib/depends
         run: |
-          make HOST=aarch64-linux-android -j2
+          make HOST=aarch64-linux-android -j$(nproc)
 
       - name: Configure Android ARM64 CLI
         run: |
@@ -55,13 +72,14 @@ jobs:
 
       - name: Build monero-wallet-cli
         run: |
-          cmake --build build-android-arm64 --target monero-wallet-cli -j2
+          cmake --build build-android-arm64 --target monero-wallet-cli -j$(nproc)
 
       - name: Verify binary
         run: |
           file build-android-arm64/bin/monero-wallet-cli
           build-android-arm64/bin/monero-wallet-cli --help >/tmp/wallet-help.txt 2>&1 || true
           head -n 20 /tmp/wallet-help.txt
+          ccache --show-stats
 
       - name: Package Android ARM64 CLI
         run: |
