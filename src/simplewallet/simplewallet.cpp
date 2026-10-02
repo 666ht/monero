@@ -611,7 +611,7 @@ namespace
   }
 } // anonymous namespace
 
-void simple_wallet::handle_transfer_exception(const std::exception_ptr &e, bool 受信任_daemon)
+void simple_wallet::handle_transfer_exception(const std::exception_ptr &e, bool trusted_daemon)
 {
     bool warn_of_possible_attack = !受信任_daemon;
     try
@@ -1473,7 +1473,7 @@ bool simple_wallet::import_multisig_main(const std::vector<std::string> &args, b
     fail_msg_writer() << tr("导入多重签名信息失败：") << e.what();
     return false;
   }
-  if (m_wallet->is_受信任_daemon())
+  if (m_wallet->is_trusted_daemon())
   {
     try
     {
@@ -1687,7 +1687,7 @@ bool simple_wallet::submit_multisig_main(const std::vector<std::string> &args, b
   }
   catch (const std::exception &e)
   {
-    handle_transfer_exception(std::current_exception(), m_wallet->is_受信任_daemon());
+    handle_transfer_exception(std::current_exception(), m_wallet->is_trusted_daemon());
   }
   catch (...)
   {
@@ -3042,7 +3042,7 @@ bool simple_wallet::scan_tx(const std::vector<std::string> &args)
     txids.insert(txid);
   }
 
-  if (!m_wallet->is_受信任_daemon()) {
+  if (!m_wallet->is_trusted_daemon()) {
     message_writer(console_color_red, true) << tr("警告：此操作可能会将交易 ID 泄露给远程节点，并影响您的隐私");
     if (!command_line::is_yes(input_line("Do you want to continue?", true))) {
       message_writer() << tr("您已取消操作");
@@ -3054,7 +3054,7 @@ bool simple_wallet::scan_tx(const std::vector<std::string> &args)
   m_in_manual_refresh.store(true);
   try {
     m_wallet->scan_tx(txids);
-  } catch (const tools::error::wont_reprocess_recent_txs_via_un受信任_daemon &e) {
+  } catch (const tools::error::wont_reprocess_recent_txs_via_untrusted_daemon &e) {
     fail_msg_writer() << e.what() << ". Either connect to a 受信任 daemon by passing --受信任-daemon when starting the wallet, or use rescan_bc to rescan the chain.";
   } catch (const std::exception &e) {
     fail_msg_writer() << e.what();
@@ -4559,7 +4559,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
     return false;
   }
 
-  if (!m_wallet->is_受信任_daemon())
+  if (!m_wallet->is_trusted_daemon())
   {
     message_writer(console_color_red, true) << (boost::format(tr("警告：正在使用不受信任的守护进程 %s")) % m_wallet->get_daemon_address()).str();
     message_writer(console_color_red, true) << boost::format(tr("使用第三方守护进程可能损害您的安全和隐私"));
@@ -5320,7 +5320,7 @@ void simple_wallet::check_background_mining(const epee::wipeable_string &passwor
     return;
   }
 
-  if (!m_wallet->is_受信任_daemon())
+  if (!m_wallet->is_trusted_daemon())
   {
     message_writer() << tr("正在使用不受信任的守护进程，跳过后台挖矿检查");
     return;
@@ -5379,7 +5379,7 @@ bool simple_wallet::start_mining(const std::vector<std::string>& args)
     return true;
   }
 
-  if (!m_wallet->is_受信任_daemon())
+  if (!m_wallet->is_trusted_daemon())
   {
     fail_msg_writer() << tr("此命令需要可信守护进程，请使用 --受信任-daemon 启用");
     return true;
@@ -5530,17 +5530,17 @@ bool simple_wallet::set_daemon(const std::vector<std::string>& args)
 
     if (!受信任.empty())
     {
-      m_wallet->set_受信任_daemon(受信任 == "受信任");
+      m_wallet->set_trusted_daemon(受信任 == "受信任");
     }
     else
     {
-      m_wallet->set_受信任_daemon(false);
+      m_wallet->set_trusted_daemon(false);
       try
       {
         if (tools::is_local_address(m_wallet->get_daemon_address()))
         {
           MINFO(tr("守护进程位于本地，默认视为可信"));
-          m_wallet->set_受信任_daemon(true);
+          m_wallet->set_trusted_daemon(true);
         }
       }
       catch (const std::exception &e) { }
@@ -5552,7 +5552,7 @@ bool simple_wallet::set_daemon(const std::vector<std::string>& args)
       return true;
     }
 
-    success_msg_writer() << boost::format("守护进程已设置为 %s，%s") % daemon_url % (m_wallet->is_受信任_daemon() ? tr("受信任") : tr("un受信任"));
+    success_msg_writer() << boost::format("守护进程已设置为 %s，%s") % daemon_url % (m_wallet->is_trusted_daemon() ? tr("受信任") : tr("un受信任"));
   } else {
     fail_msg_writer() << tr("这似乎不是有效的守护进程地址。");
   }
@@ -5790,7 +5790,7 @@ bool simple_wallet::refresh_main(uint64_t start_height, enum ResetType reset, bo
     // For manual refresh don't allow incremental checking of the pool: Because we did not process the txs
     // for us in the pool during automatic refresh we could miss some of them if we checked the pool
     // incrementally here
-    m_wallet->refresh(m_wallet->is_受信任_daemon(), start_height, fetched_blocks, received_money, true, false);
+    m_wallet->refresh(m_wallet->is_trusted_daemon(), start_height, fetched_blocks, received_money, true, false);
 
     if (reset == ResetSoftKeepKI)
     {
@@ -6141,7 +6141,7 @@ bool simple_wallet::show_blockchain_height(const std::vector<std::string>& args)
 bool simple_wallet::rescan_spent(const std::vector<std::string> &args)
 {
   CHECK_IF_BACKGROUND_SYNCING("cannot rescan spent");
-  if (!m_wallet->is_受信任_daemon())
+  if (!m_wallet->is_trusted_daemon())
   {
     fail_msg_writer() << tr("此命令需要可信守护进程，请使用 --受信任-daemon 启用");
     return true;
@@ -6862,7 +6862,7 @@ bool simple_wallet::transfer_main(const std::vector<std::string> &args_, bool ca
       }
       catch (const std::exception& e)
       {
-        handle_transfer_exception(std::current_exception(), m_wallet->is_受信任_daemon());
+        handle_transfer_exception(std::current_exception(), m_wallet->is_trusted_daemon());
         return false;
       }
       catch (...)
@@ -6892,7 +6892,7 @@ bool simple_wallet::transfer_main(const std::vector<std::string> &args_, bool ca
   }
   catch (const std::exception &e)
   {
-    handle_transfer_exception(std::current_exception(), m_wallet->is_受信任_daemon());
+    handle_transfer_exception(std::current_exception(), m_wallet->is_trusted_daemon());
     return false;
   }
   catch (...)
@@ -7015,7 +7015,7 @@ bool simple_wallet::sweep_unmixable(const std::vector<std::string> &args_)
   }
   catch (const std::exception &e)
   {
-    handle_transfer_exception(std::current_exception(), m_wallet->is_受信任_daemon());
+    handle_transfer_exception(std::current_exception(), m_wallet->is_trusted_daemon());
   }
   catch (...)
   {
@@ -7280,7 +7280,7 @@ bool simple_wallet::sweep_main(uint32_t account, uint64_t below, const std::vect
       }
       catch (const std::exception& e)
       {
-        handle_transfer_exception(std::current_exception(), m_wallet->is_受信任_daemon());
+        handle_transfer_exception(std::current_exception(), m_wallet->is_trusted_daemon());
       }
       catch (...)
       {
@@ -7307,7 +7307,7 @@ bool simple_wallet::sweep_main(uint32_t account, uint64_t below, const std::vect
   }
   catch (const std::exception& e)
   {
-    handle_transfer_exception(std::current_exception(), m_wallet->is_受信任_daemon());
+    handle_transfer_exception(std::current_exception(), m_wallet->is_trusted_daemon());
   }
   catch (...)
   {
@@ -7516,7 +7516,7 @@ bool simple_wallet::sweep_single(const std::vector<std::string> &args_)
       }
       catch (const std::exception& e)
       {
-        handle_transfer_exception(std::current_exception(), m_wallet->is_受信任_daemon());
+        handle_transfer_exception(std::current_exception(), m_wallet->is_trusted_daemon());
       }
       catch (...)
       {
@@ -7544,7 +7544,7 @@ bool simple_wallet::sweep_single(const std::vector<std::string> &args_)
   }
   catch (const std::exception& e)
   {
-    handle_transfer_exception(std::current_exception(), m_wallet->is_受信任_daemon());
+    handle_transfer_exception(std::current_exception(), m_wallet->is_trusted_daemon());
   }
   catch (...)
   {
@@ -7910,7 +7910,7 @@ bool simple_wallet::submit_transfer(const std::vector<std::string> &args_)
   }
   catch (const std::exception& e)
   {
-    handle_transfer_exception(std::current_exception(), m_wallet->is_受信任_daemon());
+    handle_transfer_exception(std::current_exception(), m_wallet->is_trusted_daemon());
   }
   catch (...)
   {
@@ -9187,7 +9187,7 @@ bool simple_wallet::check_refresh()
         uint64_t fetched_blocks;
         bool received_money;
         if (try_connect_to_daemon(true))
-          m_wallet->refresh(m_wallet->is_受信任_daemon(), 0, fetched_blocks, received_money, false); // don't check the pool in background mode
+          m_wallet->refresh(m_wallet->is_trusted_daemon(), 0, fetched_blocks, received_money, false); // don't check the pool in background mode
       }
       catch(...) {}
       m_auto_refresh_refreshing = false;
@@ -10076,7 +10076,7 @@ bool simple_wallet::import_key_images(const std::vector<std::string> &args)
     return true;
   }
   CHECK_IF_BACKGROUND_SYNCING("cannot import key images");
-  if (!m_wallet->is_受信任_daemon())
+  if (!m_wallet->is_trusted_daemon())
   {
     fail_msg_writer() << tr("此命令需要可信守护进程，请使用 --受信任-daemon 启用");
     return true;
@@ -10134,7 +10134,7 @@ void simple_wallet::key_images_sync_intern(){
     if (height > 0)
     {
       success_msg_writer() << tr("密钥镜像已同步到区块高度 ") << height;
-      if (!m_wallet->is_受信任_daemon())
+      if (!m_wallet->is_trusted_daemon())
       {
         message_writer() << tr("Running un受信任 daemon, cannot determine which transaction output is spent. Use a 受信任 daemon with --受信任-daemon and run rescan_spent");
       } else
