@@ -180,7 +180,7 @@ namespace
   const command_line::arg_descriptor< std::vector<std::string> > arg_command = {"command", ""};
 
   const char* USAGE_START_MINING("start_mining [<number_of_threads>] [bg_mining] [ignore_battery]");
-  const char* USAGE_SET_DAEMON("set_daemon <host>[:<port>] [受信任|un受信任|this-is-probably-a-spy-node]");
+  const char* USAGE_SET_DAEMON("set_daemon <host>[:<port>] [trusted|untrusted|this-is-probably-a-spy-node]");
   const char* USAGE_SHOW_BALANCE("balance [detail]");
   const char* USAGE_INCOMING_TRANSFERS("incoming_transfers [available|unavailable] [verbose] [uses] [index=<N1>[,<N2>[,...]]]");
   const char* USAGE_PAYMENTS("payments <PID_1> [<PID_2> ... <PID_N>]");
@@ -613,7 +613,7 @@ namespace
 
 void simple_wallet::handle_transfer_exception(const std::exception_ptr &e, bool trusted_daemon)
 {
-    bool warn_of_possible_attack = !受信任_daemon;
+    bool warn_of_possible_attack = !trusted_daemon;
     try
     {
       std::rethrow_exception(e);
@@ -3055,7 +3055,7 @@ bool simple_wallet::scan_tx(const std::vector<std::string> &args)
   try {
     m_wallet->scan_tx(txids);
   } catch (const tools::error::wont_reprocess_recent_txs_via_untrusted_daemon &e) {
-    fail_msg_writer() << e.what() << ". Either connect to a 受信任 daemon by passing --受信任-daemon when starting the wallet, or use rescan_bc to rescan the chain.";
+    fail_msg_writer() << e.what() << ". Either connect to a 受信任 daemon by passing --trusted-daemon when starting the wallet, or use rescan_bc to rescan the chain.";
   } catch (const std::exception &e) {
     fail_msg_writer() << e.what();
   }
@@ -4567,7 +4567,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
     if (m_wallet->check_connection(NULL, &ssl) && !ssl)
       message_writer(console_color_red, true) << boost::format(tr("使用自己的节点但不启用 SSL，会使 RPC 流量暴露给监控"));
     message_writer(console_color_red, true) << boost::format(tr("强烈建议使用自己的守护进程连接 Monero 网络"));
-    message_writer(console_color_red, true) << boost::format(tr("If you or someone you trust are operating this daemon, you can use --受信任-daemon"));
+    message_writer(console_color_red, true) << boost::format(tr("If you or someone you trust are operating this daemon, you can use --trusted-daemon"));
   }
 
   if (m_wallet->get_ring_database().empty())
@@ -5381,7 +5381,7 @@ bool simple_wallet::start_mining(const std::vector<std::string>& args)
 
   if (!m_wallet->is_trusted_daemon())
   {
-    fail_msg_writer() << tr("此命令需要可信守护进程，请使用 --受信任-daemon 启用");
+    fail_msg_writer() << tr("此命令需要可信守护进程，请使用 --trusted-daemon 启用");
     return true;
   }
 
@@ -5496,25 +5496,25 @@ bool simple_wallet::set_daemon(const std::vector<std::string>& args)
       return true;
     }
 
-    std::string 受信任;
+    std::string trusted;
     if (args.size() == 2)
     {
-      if (args[1] == "受信任")
-        受信任 = "受信任";
-      else if (args[1] == "un受信任")
-        受信任 = "un受信任";
+      if (args[1] == "trusted")
+        trusted = "trusted";
+      else if (args[1] == "untrusted")
+        trusted = "untrusted";
       else if (args[1] == "this-is-probably-a-spy-node")
-        受信任 = "this-is-probably-a-spy-node";
+        trusted = "this-is-probably-a-spy-node";
       else
       {
-        fail_msg_writer() << tr("Expected 受信任, un受信任 or this-is-probably-a-spy-node got ") << args[1];
+        fail_msg_writer() << tr("Expected trusted, untrusted or this-is-probably-a-spy-node got ") << args[1];
         return true;
       }
     }
 
     if (!tools::is_privacy_preserving_network(parsed.host) && !tools::is_local_address(parsed.host))
     {
-      if (受信任 == "un受信任" || 受信任 == "")
+      if (trusted == "untrusted" || trusted == "")
       {
         fail_msg_writer() << tr("这不是 Tor/I2P 地址，也不是受信任的守护进程。");
         fail_msg_writer() << tr("Either use your own 受信任 node, connect via Tor or I2P, or pass this-is-probably-a-spy-node and be spied on.");
@@ -5528,9 +5528,9 @@ bool simple_wallet::set_daemon(const std::vector<std::string>& args)
     LOCK_IDLE_SCOPE();
     m_wallet->init(daemon_url);
 
-    if (!受信任.empty())
+    if (!trusted.empty())
     {
-      m_wallet->set_trusted_daemon(受信任 == "受信任");
+      m_wallet->set_trusted_daemon(trusted == "trusted");
     }
     else
     {
@@ -6143,7 +6143,7 @@ bool simple_wallet::rescan_spent(const std::vector<std::string> &args)
   CHECK_IF_BACKGROUND_SYNCING("cannot rescan spent");
   if (!m_wallet->is_trusted_daemon())
   {
-    fail_msg_writer() << tr("此命令需要可信守护进程，请使用 --受信任-daemon 启用");
+    fail_msg_writer() << tr("此命令需要可信守护进程，请使用 --trusted-daemon 启用");
     return true;
   }
 
@@ -10078,7 +10078,7 @@ bool simple_wallet::import_key_images(const std::vector<std::string> &args)
   CHECK_IF_BACKGROUND_SYNCING("cannot import key images");
   if (!m_wallet->is_trusted_daemon())
   {
-    fail_msg_writer() << tr("此命令需要可信守护进程，请使用 --受信任-daemon 启用");
+    fail_msg_writer() << tr("此命令需要可信守护进程，请使用 --trusted-daemon 启用");
     return true;
   }
 
@@ -10136,7 +10136,7 @@ void simple_wallet::key_images_sync_intern(){
       success_msg_writer() << tr("密钥镜像已同步到区块高度 ") << height;
       if (!m_wallet->is_trusted_daemon())
       {
-        message_writer() << tr("Running un受信任 daemon, cannot determine which transaction output is spent. Use a 受信任 daemon with --受信任-daemon and run rescan_spent");
+        message_writer() << tr("Running un受信任 daemon, cannot determine which transaction output is spent. Use a 受信任 daemon with --trusted-daemon and run rescan_spent");
       } else
       {
         success_msg_writer() << print_money(spent) << tr(" spent, ") << print_money(unspent) << tr(" unspent");
