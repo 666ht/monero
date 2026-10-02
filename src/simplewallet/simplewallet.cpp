@@ -3766,9 +3766,9 @@ bool simple_wallet::ask_wallet_create_if_needed(const std::string &wallet_dir)
       LOG_PRINT_L3("User asked to specify wallet file name.");
       wallet_path = input_line(
         tr(m_restoring ? "Specify a new wallet file name for your restored wallet (e.g., MyWallet).\n"
-        "Wallet file name (or Ctrl-C to quit)" :
-        "Specify wallet file name (e.g., MyWallet). If the wallet doesn't exist, it will be created.\n"
-        "Wallet file name (or Ctrl-C to quit)")
+        "钱包文件名（或按 Ctrl-C 退出）" :
+        "请输入钱包文件名（例如 MyWallet）。如果钱包不存在，将创建新钱包。\n"
+        "钱包文件名（或按 Ctrl-C 退出）")
       );
       if(std::cin.eof())
       {
@@ -10511,7 +10511,7 @@ int main(int argc, char* argv[])
   std::tie(vm, should_terminate) = wallet_args::main(
    argc, argv,
    "monero-wallet-cli [--wallet-file=<filename>|--generate-new-wallet=<filename>] [<COMMAND>]",
-    sw::tr("This is the command line monero wallet. It needs to connect to a monero\ndaemon to work correctly.\nWARNING: Do not reuse your Monero keys on another fork, UNLESS this fork has key reuse mitigations built in. Doing so will harm your privacy."),
+    sw::tr("这是 Monero 命令行钱包。它需要连接到 Monero 守护进程才能正常工作。\n警告：除非其他分叉内置了防止密钥复用的保护机制，否则不要在其他分叉上重复使用您的 Monero 密钥。这样做会损害您的隐私。"),
     desc_params,
     positional_options,
     [](const std::string &s, bool emphasis){ tools::scoped_message_writer(emphasis ? epee::console_color_white : epee::console_color_default, true) << s; },
