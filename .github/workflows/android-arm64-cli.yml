@@ -1,0 +1,80 @@
+name: Android ARM64 CLI
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/simplewallet/**'
+      - 'src/wallet/**'
+      - 'src/cryptonote_core/**'
+      - 'contrib/depends/**'
+      - '.github/workflows/android-arm64-cli.yml'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build-android-arm64-cli:
+    name: Android ARM64 monero-wallet-cli
+    runs-on: ubuntu-latest
+
+    env:
+      HOST: aarch64-linux-android
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Restore depends cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            contrib/depends/built
+            contrib/depends/sources
+          key: android-arm64-depends-${{ hashFiles('contrib/depends/**') }}
+          restore-keys: |
+            android-arm64-depends-
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build python3 pkg-config curl git unzip xz-utils file
+
+      - name: Build Android ARM64 dependencies
+        working-directory: contrib/depends
+        run: |
+          make HOST=aarch64-linux-android -j2
+
+      - name: Configure Android ARM64 CLI
+        run: |
+          cmake -S . -B build-android-arm64             -G Ninja             -DCMAKE_TOOLCHAIN_FILE="$GITHUB_WORKSPACE/contrib/depends/aarch64-linux-android/share/toolchain.cmake"             -DCMAKE_BUILD_TYPE=Release             -DARCH=default             -DBUILD_TESTS=OFF             -DBUILD_GUI_DEPS=OFF             -DWITHUDEV=OFF             -DMANUAL_SUBMODULES=OFF
+
+      - name: Build monero-wallet-cli
+        run: |
+          cmake --build build-android-arm64 --target monero-wallet-cli -j2
+
+      - name: Verify binary
+        run: |
+          file build-android-arm64/bin/monero-wallet-cli
+          build-android-arm64/bin/monero-wallet-cli --help >/tmp/wallet-help.txt 2>&1 || true
+          head -n 20 /tmp/wallet-help.txt
+
+      - name: Package Android ARM64 CLI
+        run: |
+          mkdir -p artifact
+          cp build-android-arm64/bin/monero-wallet-cli artifact/monero-wallet-cli-android-arm64
+          chmod +x artifact/monero-wallet-cli-android-arm64
+          file artifact/monero-wallet-cli-android-arm64
+          sha256sum artifact/monero-wallet-cli-android-arm64 > artifact/SHA256SUMS.txt
+
+      - name: Upload Android ARM64 CLI
+        uses: actions/upload-artifact@v7
+        with:
+          name: monero-wallet-cli-android-arm64
+          path: artifact/
+          if-no-files-found: error
+          retention-days: 14
