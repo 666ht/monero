@@ -212,9 +212,9 @@ namespace wallet_args
       const char *logs = getenv("MONERO_LOGS");
       MINFO("Setting log levels = " << (logs ? logs : "<default>"));
     }
-    MINFO(wallet_args::tr("Logging to: ") << log_path);
+    MINFO(wallet_args::tr("日志保存至：") << log_path);
 
-    Print(print) << boost::format(wallet_args::tr("Logging to %s")) % log_path;
+    Print(print) << boost::format(wallet_args::tr("日志保存至 %s")) % log_path;
 
     const ssize_t lockable_memory = tools::get_lockable_memory();
     if (lockable_memory >= 0 && lockable_memory < 256 * 4096) // 256 pages -> at least 256 secret keys and other such small/medium objects
