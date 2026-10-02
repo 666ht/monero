@@ -247,26 +247,26 @@ namespace
 {
 // Create on-demand to prevent static initialization order fiasco issues.
 struct options {
-  const command_line::arg_descriptor<std::string> daemon_address = {"daemon-address", tools::wallet2::tr("Use daemon instance at <host>:<port>"), ""};
-  const command_line::arg_descriptor<std::string> daemon_host = {"daemon-host", tools::wallet2::tr("Use daemon instance at host <arg> instead of localhost"), ""};
-  const command_line::arg_descriptor<std::string> proxy = {"proxy", tools::wallet2::tr("[<ip>:]<port> socks proxy to use for daemon connections"), {}, true};
-  const command_line::arg_descriptor<bool> trusted_daemon = {"trusted-daemon", tools::wallet2::tr("Enable commands which rely on a trusted daemon"), false};
-  const command_line::arg_descriptor<bool> untrusted_daemon = {"untrusted-daemon", tools::wallet2::tr("Disable commands which rely on a trusted daemon"), false};
-  const command_line::arg_descriptor<std::string> password = {"password", tools::wallet2::tr("Wallet password (escape/quote as needed)"), "", true};
+  const command_line::arg_descriptor<std::string> daemon_address = {"daemon-address", tools::wallet2::tr("使用 <host>:<port> 的守护进程实例"), ""};
+  const command_line::arg_descriptor<std::string> daemon_host = {"daemon-host", tools::wallet2::tr("使用主机 <arg> 的守护进程实例，而不是 localhost"), ""};
+  const command_line::arg_descriptor<std::string> proxy = {"proxy", tools::wallet2::tr("用于守护进程连接的 [<ip>:]<port> SOCKS 代理"), {}, true};
+  const command_line::arg_descriptor<bool> trusted_daemon = {"trusted-daemon", tools::wallet2::tr("启用依赖受信任守护进程的命令"), false};
+  const command_line::arg_descriptor<bool> untrusted_daemon = {"untrusted-daemon", tools::wallet2::tr("禁用依赖受信任守护进程的命令"), false};
+  const command_line::arg_descriptor<std::string> password = {"password", tools::wallet2::tr("钱包密码（必要时使用转义或引号）"), "", true};
   const command_line::arg_descriptor<std::string> password_file = wallet_args::arg_password_file();
-  const command_line::arg_descriptor<int> daemon_port = {"daemon-port", tools::wallet2::tr("Use daemon instance at port <arg> instead of 18081"), 0};
-  const command_line::arg_descriptor<std::string> daemon_login = {"daemon-login", tools::wallet2::tr("Specify username[:password] for daemon RPC client"), "", true};
-  const command_line::arg_descriptor<std::string> daemon_ssl = {"daemon-ssl", tools::wallet2::tr("Enable SSL on daemon RPC connections: enabled|disabled|autodetect"), "autodetect"};
-  const command_line::arg_descriptor<std::string> daemon_ssl_private_key = {"daemon-ssl-private-key", tools::wallet2::tr("Path to a PEM format private key"), ""};
-  const command_line::arg_descriptor<std::string> daemon_ssl_certificate = {"daemon-ssl-certificate", tools::wallet2::tr("Path to a PEM format certificate"), ""};
-  const command_line::arg_descriptor<std::string> daemon_ssl_ca_certificates = {"daemon-ssl-ca-certificates", tools::wallet2::tr("Path to file containing concatenated PEM format certificate(s) to replace system CA(s).")};
-  const command_line::arg_descriptor<std::vector<std::string>> daemon_ssl_allowed_fingerprints = {"daemon-ssl-allowed-fingerprints", tools::wallet2::tr("List of valid fingerprints of allowed RPC servers")};
-  const command_line::arg_descriptor<bool> daemon_ssl_allow_any_cert = {"daemon-ssl-allow-any-cert", tools::wallet2::tr("Allow any SSL certificate from the daemon"), false};
-  const command_line::arg_descriptor<bool> daemon_ssl_allow_chained = {"daemon-ssl-allow-chained", tools::wallet2::tr("Allow user (via --daemon-ssl-ca-certificates) chain certificates"), false};
-  const command_line::arg_descriptor<bool> testnet = {"testnet", tools::wallet2::tr("For testnet. Daemon must also be launched with --testnet flag"), false};
-  const command_line::arg_descriptor<bool> stagenet = {"stagenet", tools::wallet2::tr("For stagenet. Daemon must also be launched with --stagenet flag"), false};
+  const command_line::arg_descriptor<int> daemon_port = {"daemon-port", tools::wallet2::tr("使用端口 <arg> 的守护进程实例，而不是 18081"), 0};
+  const command_line::arg_descriptor<std::string> daemon_login = {"daemon-login", tools::wallet2::tr("指定守护进程 RPC 客户端的用户名[:密码]"), "", true};
+  const command_line::arg_descriptor<std::string> daemon_ssl = {"daemon-ssl", tools::wallet2::tr("启用守护进程 RPC 连接的 SSL：启用|禁用|自动检测"), "autodetect"};
+  const command_line::arg_descriptor<std::string> daemon_ssl_private_key = {"daemon-ssl-private-key", tools::wallet2::tr("PEM 格式私钥路径"), ""};
+  const command_line::arg_descriptor<std::string> daemon_ssl_certificate = {"daemon-ssl-certificate", tools::wallet2::tr("PEM 格式证书路径"), ""};
+  const command_line::arg_descriptor<std::string> daemon_ssl_ca_certificates = {"daemon-ssl-ca-certificates", tools::wallet2::tr("包含连接后的 PEM 格式证书、用于替换系统 CA 证书的文件路径。")};
+  const command_line::arg_descriptor<std::vector<std::string>> daemon_ssl_allowed_fingerprints = {"daemon-ssl-allowed-fingerprints", tools::wallet2::tr("允许的 RPC 服务器指纹列表")};
+  const command_line::arg_descriptor<bool> daemon_ssl_allow_any_cert = {"daemon-ssl-allow-any-cert", tools::wallet2::tr("允许守护进程使用任何 SSL 证书"), false};
+  const command_line::arg_descriptor<bool> daemon_ssl_allow_chained = {"daemon-ssl-allow-chained", tools::wallet2::tr("允许用户（通过 --daemon-ssl-ca-certificates）指定证书链"), false};
+  const command_line::arg_descriptor<bool> testnet = {"testnet", tools::wallet2::tr("用于测试网。守护进程也必须使用 --testnet 参数启动"), false};
+  const command_line::arg_descriptor<bool> stagenet = {"stagenet", tools::wallet2::tr("用于预发布网络。守护进程也必须使用 --stagenet 参数启动"), false};
   const command_line::arg_descriptor<std::string, false, true, 2> shared_ringdb_dir = {
-    "shared-ringdb-dir", tools::wallet2::tr("Set shared ring database path"),
+    "shared-ringdb-dir", tools::wallet2::tr("设置共享环签名数据库路径"),
     get_default_ringdb_path(),
     {{ &testnet, &stagenet }},
     [](std::array<bool, 2> testnet_stagenet, bool defaulted, std::string val)->std::string {
@@ -277,14 +277,14 @@ struct options {
       return val;
     }
   };
-  const command_line::arg_descriptor<uint64_t> kdf_rounds = {"kdf-rounds", tools::wallet2::tr("Number of rounds for the key derivation function"), 1};
-  const command_line::arg_descriptor<std::string> hw_device = {"hw-device", tools::wallet2::tr("HW device to use"), ""};
-  const command_line::arg_descriptor<std::string> hw_device_derivation_path = {"hw-device-deriv-path", tools::wallet2::tr("HW device wallet derivation path (e.g., SLIP-10)"), ""};
+  const command_line::arg_descriptor<uint64_t> kdf_rounds = {"kdf-rounds", tools::wallet2::tr("密钥派生函数的迭代次数"), 1};
+  const command_line::arg_descriptor<std::string> hw_device = {"hw-device", tools::wallet2::tr("要使用的硬件设备"), ""};
+  const command_line::arg_descriptor<std::string> hw_device_derivation_path = {"hw-device-deriv-path", tools::wallet2::tr("硬件设备钱包派生路径（例如 SLIP-10）"), ""};
   const command_line::arg_descriptor<std::string> tx_notify = { "tx-notify" , "Run a program for each new incoming transaction, '%s' will be replaced by the transaction hash" , "" };
-  const command_line::arg_descriptor<bool> no_dns = {"no-dns", tools::wallet2::tr("Do not use DNS"), false};
-  const command_line::arg_descriptor<bool> offline = {"offline", tools::wallet2::tr("Do not connect to a daemon, nor use DNS"), false};
+  const command_line::arg_descriptor<bool> no_dns = {"no-dns", tools::wallet2::tr("不使用 DNS"), false};
+  const command_line::arg_descriptor<bool> offline = {"offline", tools::wallet2::tr("不连接守护进程，也不使用 DNS"), false};
   const command_line::arg_descriptor<std::string> extra_entropy = {"extra-entropy", tools::wallet2::tr("File containing extra entropy to initialize the PRNG (any data, aim for 256 bits of entropy to be useful, which typically means more than 256 bits of data)")};
-  const command_line::arg_descriptor<bool> allow_mismatched_daemon_version = {"allow-mismatched-daemon-version", tools::wallet2::tr("Allow communicating with a daemon that uses a different version"), false};
+  const command_line::arg_descriptor<bool> allow_mismatched_daemon_version = {"allow-mismatched-daemon-version", tools::wallet2::tr("允许与使用不同版本的守护进程通信"), false};
 };
 
 void do_prepare_file_names(const std::string& file_path, std::string& keys_file, std::string& wallet_file, std::string &mms_file)
@@ -380,7 +380,7 @@ std::unique_ptr<tools::wallet2> make_basic(const boost::program_options::variabl
   };
 
   THROW_WALLET_EXCEPTION_IF(!daemon_address.empty() && !daemon_host.empty() && 0 != daemon_port,
-      tools::error::wallet_internal_error, tools::wallet2::tr("can't specify daemon host or port more than once"));
+      tools::error::wallet_internal_error, tools::wallet2::tr("不能多次指定守护进程主机或端口"));
 
   boost::optional<epee::net_utils::http::login> login{};
   if (command_line::has_arg(vm, opts.daemon_login))
@@ -453,7 +453,7 @@ std::unique_ptr<tools::wallet2> make_basic(const boost::program_options::variabl
   if (!command_line::is_arg_defaulted(vm, opts.trusted_daemon) || !command_line::is_arg_defaulted(vm, opts.untrusted_daemon))
     trusted_daemon = command_line::get_arg(vm, opts.trusted_daemon) && !command_line::get_arg(vm, opts.untrusted_daemon);
   THROW_WALLET_EXCEPTION_IF(!command_line::is_arg_defaulted(vm, opts.trusted_daemon) && !command_line::is_arg_defaulted(vm, opts.untrusted_daemon),
-    tools::error::wallet_internal_error, tools::wallet2::tr("--trusted-daemon and --untrusted-daemon are both seen, assuming untrusted"));
+    tools::error::wallet_internal_error, tools::wallet2::tr("同时检测到 --trusted-daemon 和 --untrusted-daemon，将按不受信任处理"));
 
   // set --trusted-daemon if local and not overridden
   if (!trusted_daemon)
@@ -463,7 +463,7 @@ std::unique_ptr<tools::wallet2> make_basic(const boost::program_options::variabl
       trusted_daemon = false;
       if (tools::is_local_address(daemon_address))
       {
-        MINFO(tools::wallet2::tr("Daemon is local, assuming trusted"));
+        MINFO(tools::wallet2::tr("守护进程位于本机，将按受信任处理"));
         trusted_daemon = true;
       }
     }
@@ -473,7 +473,7 @@ std::unique_ptr<tools::wallet2> make_basic(const boost::program_options::variabl
   std::unique_ptr<tools::wallet2> wallet(new tools::wallet2(nettype, kdf_rounds, unattended));
   if (!wallet->init(std::move(daemon_address), std::move(login), std::move(proxy), 0, *trusted_daemon, std::move(ssl_options)))
   {
-    THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to initialize the wallet"));
+    THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("钱包初始化失败"));
   }
   boost::filesystem::path ringdb_path = command_line::get_arg(vm, opts.shared_ringdb_dir);
   wallet->set_ring_database(ringdb_path.string());
@@ -516,7 +516,7 @@ boost::optional<tools::password_container> get_password(const boost::program_opt
 {
   if (command_line::has_arg(vm, opts.password) && !command_line::is_arg_defaulted(vm, opts.password_file))
   {
-    THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("can't specify more than one of --password and --password-file"));
+    THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("不能同时指定 --password 和 --password-file"));
   }
 
   if (command_line::has_arg(vm, opts.password))
@@ -530,16 +530,16 @@ boost::optional<tools::password_container> get_password(const boost::program_opt
     const auto password_file = command_line::get_arg(vm, opts.password_file);
     bool r = epee::file_io_utils::load_file_to_string(password_file,
                                                       password);
-    THROW_WALLET_EXCEPTION_IF(!r, tools::error::wallet_internal_error, tools::wallet2::tr("the password file specified could not be read"));
+    THROW_WALLET_EXCEPTION_IF(!r, tools::error::wallet_internal_error, tools::wallet2::tr("无法读取指定的密码文件"));
 
     // Remove line breaks the user might have inserted
     boost::trim_right_if(password, boost::is_any_of("\r\n"));
     return {tools::password_container{std::move(password)}};
   }
 
-  THROW_WALLET_EXCEPTION_IF(!password_prompter, tools::error::wallet_internal_error, tools::wallet2::tr("no password specified; use --prompt-for-password to prompt for a password"));
+  THROW_WALLET_EXCEPTION_IF(!password_prompter, tools::error::wallet_internal_error, tools::wallet2::tr("未指定密码；使用 --prompt-for-password 提示输入密码"));
 
-  return password_prompter(verify ? tools::wallet2::tr("Enter a new password for the wallet") : tools::wallet2::tr("Wallet password"), verify);
+  return password_prompter(verify ? tools::wallet2::tr("请输入新钱包密码") : tools::wallet2::tr("钱包密码"), verify);
 }
 
 std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_from_json(const std::string& json_file, const boost::program_options::variables_map& vm, bool unattended, const options& opts, const std::function<boost::optional<tools::password_container>(const char *, bool)> &password_prompter)
@@ -562,14 +562,14 @@ std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_f
 
     rapidjson::Document json;
     if (json.Parse(buf.c_str()).HasParseError()) {
-      THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("Failed to parse JSON"));
+      THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("解析 JSON 失败"));
       return false;
     }
 
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, version, unsigned, Uint, true, 0);
     const int current_version = 1;
     THROW_WALLET_EXCEPTION_IF(field_version > current_version, tools::error::wallet_internal_error,
-      ((boost::format(tools::wallet2::tr("Version %u too new, we can only grok up to %u")) % field_version % current_version)).str());
+      ((boost::format(tools::wallet2::tr("版本 %u 太新，最多只能支持到 %u")) % field_version % current_version)).str());
 
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, filename, std::string, String, true, std::string());
 
@@ -585,14 +585,14 @@ std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_f
       cryptonote::blobdata viewkey_data;
       if(!epee::string_tools::parse_hexstr_to_binbuff(field_viewkey, viewkey_data) || viewkey_data.size() != sizeof(crypto::secret_key))
       {
-        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse view key secret key"));
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("解析查看私钥失败"));
       }
       memcpy(&unwrap(unwrap(viewkey)), viewkey_data.data(), sizeof(viewkey));
       crypto::public_key pkey;
       if (viewkey == crypto::null_skey)
-        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("view secret key may not be all zeroes"));
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("查看私钥不能全部为零"));
       if (!crypto::secret_key_to_public_key(viewkey, pkey)) {
-        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify view key secret key"));
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("验证查看私钥失败"));
       }
     }
 
@@ -603,14 +603,14 @@ std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_f
       cryptonote::blobdata spendkey_data;
       if(!epee::string_tools::parse_hexstr_to_binbuff(field_spendkey, spendkey_data) || spendkey_data.size() != sizeof(crypto::secret_key))
       {
-        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse spend key secret key"));
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("解析支出私钥失败"));
       }
       memcpy(&unwrap(unwrap(spendkey)), spendkey_data.data(), sizeof(spendkey));
       crypto::public_key pkey;
       if (spendkey == crypto::null_skey)
-        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("spend secret key may not be all zeroes"));
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("支出私钥不能全部为零"));
       if (!crypto::secret_key_to_public_key(spendkey, pkey)) {
-        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify spend key secret key"));
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("验证支出私钥失败"));
       }
     }
 
@@ -622,7 +622,7 @@ std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_f
     {
       if (!crypto::ElectrumWords::words_to_bytes(field_seed, recovery_key, old_language))
       {
-        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("Electrum-style word list failed verification"));
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("Electrum 风格助记词验证失败"));
       }
       restore_deterministic_wallet = true;
 
@@ -642,11 +642,11 @@ std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_f
     // compatibility checks
     if (!field_seed_found && !field_viewkey_found && !field_spendkey_found)
     {
-      THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("At least one of either an Electrum-style word list, private view key, or private spend key must be specified"));
+      THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("必须至少指定 Electrum 风格助记词、私有查看密钥或私有支出密钥中的一项"));
     }
     if (field_seed_found && (field_viewkey_found || field_spendkey_found))
     {
-      THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("Both Electrum-style word list and private key(s) specified"));
+      THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("同时指定了 Electrum 风格助记词和私钥"));
     }
 
     // if an address was given, we check keys against it, and deduce the spend
@@ -656,26 +656,26 @@ std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_f
       cryptonote::address_parse_info info;
       if(!get_account_address_from_str(info, nettype, field_address))
       {
-        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("invalid address"));
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("地址无效"));
       }
       if (field_viewkey_found)
       {
         crypto::public_key pkey;
         if (!crypto::secret_key_to_public_key(viewkey, pkey)) {
-          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify view key secret key"));
+          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("验证查看私钥失败"));
         }
         if (info.address.m_view_public_key != pkey) {
-          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("view key does not match standard address"));
+          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("查看密钥与标准地址不匹配"));
         }
       }
       if (field_spendkey_found)
       {
         crypto::public_key pkey;
         if (!crypto::secret_key_to_public_key(spendkey, pkey)) {
-          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify spend key secret key"));
+          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("验证支出私钥失败"));
         }
         if (info.address.m_spend_public_key != pkey) {
-          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("spend key does not match standard address"));
+          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("支出密钥与标准地址不匹配"));
         }
       }
     }
@@ -683,7 +683,7 @@ std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_f
     const bool deprecated_wallet = restore_deterministic_wallet && ((old_language == crypto::ElectrumWords::old_language_name) ||
       crypto::ElectrumWords::get_is_old_style_seed(field_seed));
     THROW_WALLET_EXCEPTION_IF(deprecated_wallet, tools::error::wallet_internal_error,
-      tools::wallet2::tr("Cannot generate deprecated wallets from JSON"));
+      tools::wallet2::tr("无法从 JSON 生成已弃用的钱包"));
 
     wallet.reset(make_basic(vm, unattended, opts, password_prompter).release());
     wallet->set_refresh_from_block_height(field_scan_from_height);
@@ -707,7 +707,7 @@ std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_f
       {
         cryptonote::account_public_address address;
         if (!crypto::secret_key_to_public_key(viewkey, address.m_view_public_key)) {
-          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify view key secret key"));
+          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("验证查看私钥失败"));
         }
 
         if (field_spendkey.empty())
@@ -719,13 +719,13 @@ std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_f
             cryptonote::address_parse_info info;
             if(!get_account_address_from_str(info, nettype, field_address))
             {
-              THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, std::string(tools::wallet2::tr("failed to parse address: ")) + field_address);
+              THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, std::string(tools::wallet2::tr("解析地址失败：")) + field_address);
             }
             address.m_spend_public_key = info.address.m_spend_public_key;
           }
           else
           {
-            THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("Address must be specified in order to create watch-only wallet"));
+            THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("创建仅查看钱包必须指定地址"));
           }
           wallet->generate(field_filename, field_password, address, viewkey, create_address_file);
           password = field_password;
@@ -733,7 +733,7 @@ std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_f
         else
         {
           if (!crypto::secret_key_to_public_key(spendkey, address.m_spend_public_key)) {
-            THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify spend key secret key"));
+            THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("验证支出私钥失败"));
           }
           wallet->generate(field_filename, field_password, address, spendkey, viewkey, create_address_file);
           password = field_password;
@@ -742,7 +742,7 @@ std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> generate_f
     }
     catch (const std::exception& e)
     {
-      THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, std::string(tools::wallet2::tr("failed to generate new wallet: ")) + e.what());
+      THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, std::string(tools::wallet2::tr("生成新钱包失败：")) + e.what());
     }
     return true;
   };
@@ -2264,8 +2264,8 @@ void wallet2::scan_output(const cryptonote::transaction &tx, bool miner_tx, cons
     if (!m_encrypt_keys_after_refresh && !m_processing_background_cache)
     {
       boost::optional<epee::wipeable_string> pwd = m_callback->on_get_password(pool ? "output found in pool" : "output received");
-      THROW_WALLET_EXCEPTION_IF(!pwd, error::password_needed, tr("Password is needed to compute key image for incoming monero"));
-      THROW_WALLET_EXCEPTION_IF(!verify_password(*pwd), error::password_needed, tr("Invalid password: password is needed to compute key image for incoming monero"));
+      THROW_WALLET_EXCEPTION_IF(!pwd, error::password_needed, tr("计算收到的 Monero 密钥镜像需要密码"));
+      THROW_WALLET_EXCEPTION_IF(!verify_password(*pwd), error::password_needed, tr("密码无效：计算收到的 Monero 密钥镜像需要密码"));
       m_encrypt_keys_after_refresh.reset(new wallet_keys_unlocker(*this, &*pwd));
     }
   }
@@ -5586,7 +5586,7 @@ void wallet2::setup_new_blockchain()
   generate_genesis(b);
   m_blockchain.push_back(get_block_hash(b));
   m_last_block_reward = cryptonote::get_outs_money_amount(b.miner_tx);
-  add_subaddress_account(tr("Primary account"));
+  add_subaddress_account(tr("主账户"));
 }
 
 void wallet2::create_keys_file(const std::string &wallet_, bool watch_only, const epee::wipeable_string &password, bool create_address_file)
@@ -6206,7 +6206,7 @@ std::string wallet2::exchange_multisig_keys(const epee::wipeable_string &passwor
 
     m_subaddresses.clear();
     m_subaddress_labels.clear();
-    this->add_subaddress_account(tr("Primary account"));
+    this->add_subaddress_account(tr("主账户"));
 
     if (!m_wallet_file.empty())
       this->store();
@@ -6661,7 +6661,7 @@ void wallet2::load(const std::string& wallet_, const epee::wipeable_string& pass
   trim_hashchain();
 
   if (get_num_subaddress_accounts() == 0)
-    add_subaddress_account(tr("Primary account"));
+    add_subaddress_account(tr("主账户"));
 
   try
   {
@@ -9235,7 +9235,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
     unset_ring(key_images);
   }
 
-  THROW_WALLET_EXCEPTION(error::wallet_internal_error, tr("Transaction sanity check failed"));
+  THROW_WALLET_EXCEPTION(error::wallet_internal_error, tr("交易完整性检查失败"));
 }
 
 void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs, const std::vector<size_t> &selected_transfers, size_t fake_outputs_count, std::vector<uint64_t> &rct_offsets, std::unordered_set<crypto::public_key> &valid_public_keys_cache)
@@ -12501,7 +12501,7 @@ std::string wallet2::get_tx_proof(const cryptonote::transaction &tx, const crypt
     THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(shared_secret[i], rct::rct2sk(rct::I), additional_derivations[i - 1]), error::wallet_internal_error, "Failed to generate key derivation");
   uint64_t received;
   check_tx_key_helper(tx, derivation, additional_derivations, address, received);
-  THROW_WALLET_EXCEPTION_IF(!received, error::wallet_internal_error, tr("No funds received in this tx."));
+  THROW_WALLET_EXCEPTION_IF(!received, error::wallet_internal_error, tr("此交易未收到资金。"));
 
   // concatenate all signature strings
   for (size_t i = 0; i < num_sigs; ++i)
@@ -13422,7 +13422,7 @@ uint64_t wallet2::import_key_images(const std::string &filename, uint64_t &spent
   std::string data;
   bool r = load_from_file(filename, data);
 
-  THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, std::string(tr("failed to read file ")) + filename);
+  THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, std::string(tr("读取文件失败：")) + filename);
 
   const size_t magiclen = strlen(KEY_IMAGE_EXPORT_FILE_MAGIC);
   if (data.size() < magiclen || memcmp(data.data(), KEY_IMAGE_EXPORT_FILE_MAGIC, magiclen))
