@@ -2925,7 +2925,7 @@ bool simple_wallet::set_load_deprecated_formats(const std::vector<std::string> &
   {
     parse_bool_and_use(args[1], [&](bool r) {
       if (r)
-        fail_msg_writer() << tr("警告：deprecated formats use boost serialization, which has buffer overflows and crashes. Support for them has been discontinued.");
+        fail_msg_writer() << tr("警告：已废弃格式使用可能导致缓冲区溢出和崩溃的 Boost 序列化方式，现已停止支持。");
     });
   }
   return true;
@@ -3865,7 +3865,7 @@ void simple_wallet::print_seed(const epee::wipeable_string &seed, bool as_legacy
     "your email or on file storage services outside of your immediate control.\n")) % seed_type;
   if (as_legacy_seed)
   {
-    success_msg_writer(true) << tr("Use the following English legacy seed, without any seed offset, to restore if you can't use the wallet's original Polyseed:\n");
+    success_msg_writer(true) << tr("如果无法使用钱包原始 Polyseed，请使用以下英文传统助记词，并且不要设置种子偏移密码短语来恢复钱包：\n");
   }
   // don't log
   if (m_wallet->is_polyseed())
