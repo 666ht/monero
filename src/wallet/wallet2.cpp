@@ -389,7 +389,7 @@ std::unique_ptr<tools::wallet2> make_basic(const boost::program_options::variabl
       command_line::get_arg(vm, opts.daemon_login), false, [password_prompter](bool verify) {
         if (!password_prompter)
         {
-          MERROR("Password needed without prompt function");
+          MERROR("需要密码，但未提供密码提示函数");
           return boost::optional<tools::password_container>();
         }
         return password_prompter("Daemon client password", verify);
@@ -921,7 +921,7 @@ bool get_short_payment_id(crypto::hash8 &payment_id8, const tools::wallet2::pend
     {
       if (ptx.dests.empty())
       {
-        MWARNING("Encrypted payment id found, but no destinations public key, cannot decrypt");
+        MWARNING("发现已加密付款 ID，但没有收款目标公钥，无法解密");
         return false;
       }
       return hwdev.decrypt_payment_id(payment_id8, ptx.dests[0].addr.m_view_public_key, ptx.tx_key);
@@ -1048,15 +1048,15 @@ gamma_picker::gamma_picker(const std::vector<uint64_t> &rct_offsets, double shap
     rct_offsets(rct_offsets)
 {
   gamma = std::gamma_distribution<double>(shape, scale);
-  THROW_WALLET_EXCEPTION_IF(rct_offsets.size() < std::max<size_t>(1, CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE), error::wallet_internal_error, "Bad offset calculation");
+  THROW_WALLET_EXCEPTION_IF(rct_offsets.size() < std::max<size_t>(1, CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE), error::wallet_internal_error, "偏移计算错误");
   const size_t blocks_in_a_year = 86400 * 365 / DIFFICULTY_TARGET_V2;
   const size_t blocks_to_consider = std::min<size_t>(rct_offsets.size(), blocks_in_a_year);
   const size_t outputs_to_consider = rct_offsets.back() - (blocks_to_consider < rct_offsets.size() ? rct_offsets[rct_offsets.size() - blocks_to_consider - 1] : 0);
   begin = rct_offsets.data();
   end = rct_offsets.data() + rct_offsets.size() - (std::max(1, CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE) - 1);
   num_rct_outputs = *(end - 1);
-  THROW_WALLET_EXCEPTION_IF(num_rct_outputs == 0, error::wallet_internal_error, "No rct outputs");
-  THROW_WALLET_EXCEPTION_IF(outputs_to_consider == 0, error::wallet_internal_error, "No outputs in consideration window");
+  THROW_WALLET_EXCEPTION_IF(num_rct_outputs == 0, error::wallet_internal_error, "没有 RingCT 输出");
+  THROW_WALLET_EXCEPTION_IF(outputs_to_consider == 0, error::wallet_internal_error, "考虑范围内没有输出");
   average_output_time = DIFFICULTY_TARGET_V2 * blocks_to_consider / static_cast<double>(outputs_to_consider); // this assumes constant target over the whole rct range
 };
 
@@ -1100,7 +1100,7 @@ uint64_t gamma_picker::pick()
   output_index = num_rct_outputs - 1 - output_index;
 
   const uint64_t *it = std::lower_bound(begin, end, output_index);
-  THROW_WALLET_EXCEPTION_IF(it == end, error::wallet_internal_error, "output_index not found");
+  THROW_WALLET_EXCEPTION_IF(it == end, error::wallet_internal_error, "未找到输出索引");
   uint64_t index = std::distance(begin, it);
 
   const uint64_t first_rct = index == 0 ? 0 : rct_offsets[index - 1];
@@ -1156,7 +1156,7 @@ wallet_keys_unlocker::~wallet_keys_unlocker()
     wallet2* w_ptr = std::addressof(w);
     if (lockers_per_wallet[w_ptr] == 0)
     {
-      MERROR("There are no lockers in wallet_keys_unlocker dtor");
+      MERROR("钱包密钥解锁器析构时不存在锁定对象");
       return;
     }
     if (--lockers_per_wallet[w_ptr] > 0)
@@ -1166,7 +1166,7 @@ wallet_keys_unlocker::~wallet_keys_unlocker()
   }
   catch (...)
   {
-    MERROR("Failed to re-encrypt wallet keys");
+    MERROR("重新加密钱包密钥失败");
     // do not propagate through dtor, we'd crash
   }
 }
@@ -1663,7 +1663,7 @@ void wallet2::expand_subaddresses(const cryptonote::subaddress_index& index)
   {
     static constexpr std::uint32_t max_idx = static_cast<std::uint32_t>(std::numeric_limits<std::size_t>::max());
     const bool cannot_label_index = index.major == max_idx || index.minor == max_idx;
-    THROW_WALLET_EXCEPTION_IF(cannot_label_index, error::wallet_internal_error, "subaddress index out of range");
+    THROW_WALLET_EXCEPTION_IF(cannot_label_index, error::wallet_internal_error, "子地址索引超出范围");
   }
 
   // resize subaddress labels just big enough that `m_subaddress_labels[index.major][index.minor]` is present
@@ -2010,7 +2010,7 @@ void wallet2::scan_tx(const std::unordered_set<crypto::hash> &txids)
         throw std::runtime_error("按高度请求区块头失败");
       m_last_block_reward = block_header.reward;
     }
-    catch (...) { MERROR("Failed getting block header at height " << txs_to_scan.highest_height); }
+    catch (...) { MERROR("获取指定高度区块头失败：" << txs_to_scan.highest_height); }
 
     // The wallet's blockchain state will now sync from the expected height correctly on next refresh loop
   }
@@ -2025,10 +2025,10 @@ void wallet2::set_subaddress_label(const cryptonote::subaddress_index& index, co
 //----------------------------------------------------------------------------------------------------
 void wallet2::set_subaddress_lookahead(size_t major, size_t minor)
 {
-  THROW_WALLET_EXCEPTION_IF(major == 0, error::wallet_internal_error, "Subaddress major lookahead may not be zero");
-  THROW_WALLET_EXCEPTION_IF(major > 0xffffffff, error::wallet_internal_error, "Subaddress major lookahead is too large");
-  THROW_WALLET_EXCEPTION_IF(minor == 0, error::wallet_internal_error, "Subaddress minor lookahead may not be zero");
-  THROW_WALLET_EXCEPTION_IF(minor > 0xffffffff, error::wallet_internal_error, "Subaddress minor lookahead is too large");
+  THROW_WALLET_EXCEPTION_IF(major == 0, error::wallet_internal_error, "子地址主索引预生成范围不能为 0");
+  THROW_WALLET_EXCEPTION_IF(major > 0xffffffff, error::wallet_internal_error, "子地址主索引预生成范围过大");
+  THROW_WALLET_EXCEPTION_IF(minor == 0, error::wallet_internal_error, "子地址次索引预生成范围不能为 0");
+  THROW_WALLET_EXCEPTION_IF(minor > 0xffffffff, error::wallet_internal_error, "子地址次索引预生成范围过大");
 
   const uint32_t old_major_lookahead = m_subaddress_lookahead_major;
   const uint32_t old_minor_lookahead = m_subaddress_lookahead_minor;
@@ -2254,7 +2254,7 @@ static uint64_t decodeRct(const rct::rctSig & rv, const crypto::key_derivation &
 //----------------------------------------------------------------------------------------------------
 void wallet2::scan_output(const cryptonote::transaction &tx, bool miner_tx, const crypto::public_key &tx_pub_key, size_t i, tx_scan_info_t &tx_scan_info, int &num_vouts_received, std::unordered_map<cryptonote::subaddress_index, uint64_t> &tx_money_got_in_outs, std::vector<size_t> &outs, bool pool)
 {
-  THROW_WALLET_EXCEPTION_IF(i >= tx.vout.size(), error::wallet_internal_error, "Invalid vout index");
+  THROW_WALLET_EXCEPTION_IF(i >= tx.vout.size(), error::wallet_internal_error, "vout 索引无效");
 
   // if keys are encrypted, ask for password
   if (m_ask_password == AskPasswordToDecrypt && !m_unattended && !m_watch_only && m_multisig_rescan_k.empty() && !m_background_syncing)
@@ -2271,7 +2271,7 @@ void wallet2::scan_output(const cryptonote::transaction &tx, bool miner_tx, cons
   }
 
   crypto::public_key output_public_key;
-  THROW_WALLET_EXCEPTION_IF(!get_output_public_key(tx.vout[i], output_public_key), error::wallet_internal_error, "Failed to get output public key");
+  THROW_WALLET_EXCEPTION_IF(!get_output_public_key(tx.vout[i], output_public_key), error::wallet_internal_error, "获取输出公钥失败");
 
   if (m_multisig || m_background_syncing/*no spend key*/)
   {
@@ -2282,19 +2282,19 @@ void wallet2::scan_output(const cryptonote::transaction &tx, bool miner_tx, cons
   else
   {
     bool r = cryptonote::generate_key_image_helper_precomp(m_account.get_keys(), output_public_key, tx_scan_info.received->derivation, i, tx_scan_info.received->index, tx_scan_info.in_ephemeral, tx_scan_info.ki, m_account.get_device());
-    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to generate key image");
+    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "生成密钥镜像失败");
     THROW_WALLET_EXCEPTION_IF(tx_scan_info.in_ephemeral.pub != output_public_key,
         error::wallet_internal_error, "key_image generated ephemeral public key not matched with output_key");
   }
 
-  THROW_WALLET_EXCEPTION_IF(std::find(outs.begin(), outs.end(), i) != outs.end(), error::wallet_internal_error, "Same output cannot be added twice");
+  THROW_WALLET_EXCEPTION_IF(std::find(outs.begin(), outs.end(), i) != outs.end(), error::wallet_internal_error, "同一输出不能重复添加");
   if (tx_scan_info.money_transfered == 0 && !miner_tx)
   {
     tx_scan_info.money_transfered = tools::decodeRct(tx.rct_signatures, tx_scan_info.received->derivation, i, tx_scan_info.mask, m_account.get_device());
   }
   if (tx_scan_info.money_transfered == 0)
   {
-    MERROR("Invalid output amount, skipping");
+    MERROR("输出金额无效，跳过");
     tx_scan_info.error = true;
     return;
   }
@@ -2426,7 +2426,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
       hwdev.set_mode(hw::device::TRANSACTION_PARSE);
       if (!hwdev.generate_key_derivation(tx_pub_key, keys.m_view_secret_key, derivation))
       {
-        MWARNING("Failed to generate key derivation from tx pubkey in " << txid << ", skipping");
+        MWARNING("根据交易公钥生成密钥派生失败：" << txid << ", skipping");
         static_assert(sizeof(derivation) == sizeof(rct::key), "Mismatched sizes of key_derivation and rct::key");
         memcpy(&derivation, rct::identity().bytes, sizeof(derivation));
       }
@@ -2441,7 +2441,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
             additional_derivations.push_back({});
             if (!hwdev.generate_key_derivation(additional_tx_pub_keys.data[i], keys.m_view_secret_key, additional_derivations.back()))
             {
-              MWARNING("Failed to generate key derivation from additional tx pubkey in " << txid << ", skipping");
+              MWARNING("根据附加交易公钥生成密钥派生失败：" << txid << ", skipping");
               memcpy(&additional_derivations.back(), rct::identity().bytes, sizeof(crypto::key_derivation));
             }
           }
@@ -2584,13 +2584,13 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
           if (ignore)
           {
             LOG_PRINT_L2("Found unencrypted payment ID in tx " << txid << " (ignored)");
-            MWARNING("Found OBSOLETE AND IGNORED unencrypted payment ID: these are bad for privacy, use subaddresses instead");
+            MWARNING("发现已废弃且被忽略的未加密付款 ID：这会损害隐私，请改用子地址");
             payment_id = crypto::null_hash;
           }
           else
           {
             LOG_PRINT_L2("Found unencrypted payment ID: " << payment_id);
-            MWARNING("Found unencrypted payment ID: these are bad for privacy, consider using subaddresses instead");
+            MWARNING("发现未加密付款 ID：这会损害隐私，请考虑改用子地址");
           }
         }
       }
@@ -2748,8 +2748,8 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
               if (!m_multisig_rescan_info.empty() && m_multisig_rescan_info.front().size() >= m_transfers.size())
                 update_multisig_rescan_info(m_multisig_rescan_k, m_multisig_rescan_info, m_transfers.size() - 1);
             }
-            THROW_WALLET_EXCEPTION_IF(td.get_public_key() != tx_scan_info[o].in_ephemeral.pub, error::wallet_internal_error, "Inconsistent public keys");
-	    THROW_WALLET_EXCEPTION_IF(td.m_spent, error::wallet_internal_error, "Inconsistent spent status");
+            THROW_WALLET_EXCEPTION_IF(td.get_public_key() != tx_scan_info[o].in_ephemeral.pub, error::wallet_internal_error, "公钥不一致");
+	    THROW_WALLET_EXCEPTION_IF(td.m_spent, error::wallet_internal_error, "已花费状态不一致");
 
 	    LOG_PRINT_L0("Received money: " << print_money(td.amount()) << ", with tx: " << txid);
 	    if (!ignore_callbacks && 0 != m_callback)
@@ -2762,7 +2762,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
     }
   }
 
-  THROW_WALLET_EXCEPTION_IF(tx_money_got_in_outs.size() != tx_amounts_individual_outs.size(), error::wallet_internal_error, "Inconsistent size of output arrays");
+  THROW_WALLET_EXCEPTION_IF(tx_money_got_in_outs.size() != tx_amounts_individual_outs.size(), error::wallet_internal_error, "输出数组大小不一致");
 
   uint64_t tx_money_spent_in_ins = 0;
   // The line below is equivalent to "boost::optional<uint32_t> subaddr_account;", but avoids the GCC warning: ‘*((void*)& subaddr_account +4)’ may be used uninitialized in this function
@@ -2787,7 +2787,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
       {
         if(amount != td.amount())
         {
-          MERROR("Inconsistent amount in tx input: got " << print_money(amount) <<
+          MERROR("交易输入金额不一致，实际得到：" << print_money(amount) <<
             ", expected " << print_money(td.amount()));
           // this means:
           //   1) the same output pub key was used as destination multiple times,
@@ -2842,7 +2842,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
           if (i != output_tracker_cache->end())
           {
             size_t idx = i->second;
-            THROW_WALLET_EXCEPTION_IF(idx >= m_transfers.size(), error::wallet_internal_error, "Output tracker cache index out of range");
+            THROW_WALLET_EXCEPTION_IF(idx >= m_transfers.size(), error::wallet_internal_error, "输出跟踪缓存索引超出范围");
 
             if (m_track_uses)
               m_transfers[idx].m_uses.push_back(std::make_pair(height, txid));
@@ -3088,8 +3088,8 @@ void wallet2::process_new_blockchain_entry(const cryptonote::block& b, const cry
     TIME_MEASURE_FINISH(miner_tx_handle_time);
 
     TIME_MEASURE_START(txs_handle_time);
-    THROW_WALLET_EXCEPTION_IF(bche.txs.size() != b.tx_hashes.size(), error::wallet_internal_error, "Wrong amount of transactions for block");
-    THROW_WALLET_EXCEPTION_IF(bche.txs.size() != parsed_block.txes.size(), error::wallet_internal_error, "Wrong amount of transactions for block");
+    THROW_WALLET_EXCEPTION_IF(bche.txs.size() != b.tx_hashes.size(), error::wallet_internal_error, "区块中的交易数量错误");
+    THROW_WALLET_EXCEPTION_IF(bche.txs.size() != parsed_block.txes.size(), error::wallet_internal_error, "区块中的交易数量错误");
     for (size_t idx = 0; idx < b.tx_hashes.size(); ++idx)
     {
       process_new_transaction(b.tx_hashes[idx], parsed_block.txes[idx], parsed_block.o_indices.indices[idx+1].indices, height, b.major_version, b.timestamp, false, false, false, tx_cache_data[tx_cache_data_offset++], output_tracker_cache);
@@ -3172,12 +3172,12 @@ void read_pool_txs(const cryptonote::COMMAND_RPC_GET_TRANSACTIONS::request &req,
             }
             else
             {
-              MERROR("Got txid " << tx_hash << " which we did not ask for");
+              MERROR("收到未请求的交易 ID：" << tx_hash);
             }
           }
           else
           {
-            LOG_PRINT_L0("Failed to parse transaction from daemon");
+            LOG_PRINT_L0("解析守护进程返回的交易失败");
           }
         }
         else
@@ -3298,7 +3298,7 @@ void wallet2::process_parsed_blocks(const uint64_t start_height, const std::vect
 {
   blocks_added = 0;
 
-  THROW_WALLET_EXCEPTION_IF(blocks.size() != parsed_blocks.size(), error::wallet_internal_error, "size mismatch");
+  THROW_WALLET_EXCEPTION_IF(blocks.size() != parsed_blocks.size(), error::wallet_internal_error, "大小不匹配");
   THROW_WALLET_EXCEPTION_IF(!m_blockchain.is_in_bounds(start_height), error::out_of_hashchain_bounds_error);
 
   tools::threadpool& tpool = tools::threadpool::getInstanceForCompute();
@@ -3327,7 +3327,7 @@ void wallet2::process_parsed_blocks(const uint64_t start_height, const std::vect
     has_prev_block = true;
 
     THROW_WALLET_EXCEPTION_IF(parsed_blocks[i].txes.size() != parsed_blocks[i].block.tx_hashes.size(),
-        error::wallet_internal_error, "Mismatched parsed_blocks[i].txes.size() and parsed_blocks[i].block.tx_hashes.size()");
+        error::wallet_internal_error, "parsed_blocks[i].txes.size() 与 parsed_blocks[i].block.tx_hashes.size() 不匹配");
     if (should_skip_block(parsed_blocks[i].block, start_height + i))
     {
       txidx += 1 + parsed_blocks[i].block.tx_hashes.size();
@@ -3342,8 +3342,8 @@ void wallet2::process_parsed_blocks(const uint64_t start_height, const std::vect
       ++txidx;
     }
   }
-  THROW_WALLET_EXCEPTION_IF(txidx != num_txes, error::wallet_internal_error, "txidx does not match tx_cache_data size");
-  THROW_WALLET_EXCEPTION_IF(!cache_waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+  THROW_WALLET_EXCEPTION_IF(txidx != num_txes, error::wallet_internal_error, "txidx 与交易缓存数据大小不匹配");
+  THROW_WALLET_EXCEPTION_IF(!cache_waiter.wait(), error::wallet_internal_error, "线程池发生异常");
 
   hw::device &hwdev =  m_account.get_device();
   hw::reset_mode rst(hwdev);
@@ -3372,7 +3372,7 @@ void wallet2::process_parsed_blocks(const uint64_t start_height, const std::vect
         gender(iod);
     }, true);
   }
-  THROW_WALLET_EXCEPTION_IF(!derivation_waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+  THROW_WALLET_EXCEPTION_IF(!derivation_waiter.wait(), error::wallet_internal_error, "线程池发生异常");
 
   auto geniod = [&](const cryptonote::transaction &tx, size_t n_vouts, size_t txidx) {
     for (size_t k = 0; k < n_vouts; ++k)
@@ -3417,7 +3417,7 @@ void wallet2::process_parsed_blocks(const uint64_t start_height, const std::vect
 
     if (m_refresh_type != RefreshType::RefreshNoCoinbase)
     {
-      THROW_WALLET_EXCEPTION_IF(txidx >= tx_cache_data.size(), error::wallet_internal_error, "txidx out of range");
+      THROW_WALLET_EXCEPTION_IF(txidx >= tx_cache_data.size(), error::wallet_internal_error, "txidx 超出范围");
       const cryptonote::transaction& tx = parsed_blocks[i].block.miner_tx;
       const size_t n_vouts = (m_refresh_type == RefreshType::RefreshOptimizeCoinbase && tx.version < 2 && !tx.vout.empty()) ? 1 : tx.vout.size();
       if (n_vouts > 0)
@@ -3431,7 +3431,7 @@ void wallet2::process_parsed_blocks(const uint64_t start_height, const std::vect
     ++txidx;
     for (size_t j = 0; j < parsed_blocks[i].txes.size(); ++j)
     {
-      THROW_WALLET_EXCEPTION_IF(txidx >= tx_cache_data.size(), error::wallet_internal_error, "txidx out of range");
+      THROW_WALLET_EXCEPTION_IF(txidx >= tx_cache_data.size(), error::wallet_internal_error, "txidx 超出范围");
       if (parsed_blocks[i].block.major_version >= hf_version_view_tags)
         geniods.push_back(geniod_params{ parsed_blocks[i].txes[j], parsed_blocks[i].txes[j].vout.size(), txidx });
       else
@@ -3439,7 +3439,7 @@ void wallet2::process_parsed_blocks(const uint64_t start_height, const std::vect
       ++txidx;
     }
   }
-  THROW_WALLET_EXCEPTION_IF(txidx != tx_cache_data.size(), error::wallet_internal_error, "txidx did not reach expected value");
+  THROW_WALLET_EXCEPTION_IF(txidx != tx_cache_data.size(), error::wallet_internal_error, "txidx 未达到预期值");
 
   // View tags significantly speed up the geniod function that determines if an output belongs to the account.
   // Because the speedup is so large, the overhead from submitting individual geniods to the thread pool eats into
@@ -3453,7 +3453,7 @@ void wallet2::process_parsed_blocks(const uint64_t start_height, const std::vect
     while (batch_start < geniods.size())
     {
       size_t batch_end = std::min(batch_start + GENIOD_BATCH_SIZE, geniods.size());
-      THROW_WALLET_EXCEPTION_IF(batch_end < batch_start, error::wallet_internal_error, "Thread batch end overflow");
+      THROW_WALLET_EXCEPTION_IF(batch_end < batch_start, error::wallet_internal_error, "线程批次结束位置溢出");
       tpool.submit(&output_waiter, [&geniods, &geniod, batch_start, batch_end]() {
         for (size_t i = batch_start; i < batch_end; ++i)
         {
@@ -3464,9 +3464,9 @@ void wallet2::process_parsed_blocks(const uint64_t start_height, const std::vect
       num_batch_txes += batch_end - batch_start;
       batch_start = batch_end;
     }
-    THROW_WALLET_EXCEPTION_IF(num_batch_txes != geniods.size(), error::wallet_internal_error, "txes batched for thread pool did not reach expected value");
+    THROW_WALLET_EXCEPTION_IF(num_batch_txes != geniods.size(), error::wallet_internal_error, "线程池批处理的交易数量未达到预期值");
   }
-  THROW_WALLET_EXCEPTION_IF(!output_waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+  THROW_WALLET_EXCEPTION_IF(!output_waiter.wait(), error::wallet_internal_error, "线程池发生异常");
 
   hwdev.set_mode(hw::device::NONE);
 
@@ -3535,7 +3535,7 @@ void check_block_hard_fork_version(cryptonote::network_type nettype, uint8_t hf_
   for (fork_index = 0; fork_index < wallet_num_hard_forks; ++fork_index)
     if (wallet_hard_forks[fork_index].version == hf_version)
       break;
-  THROW_WALLET_EXCEPTION_IF(fork_index == wallet_num_hard_forks, error::wallet_internal_error, "Fork not found in table");
+  THROW_WALLET_EXCEPTION_IF(fork_index == wallet_num_hard_forks, error::wallet_internal_error, "表中未找到分叉");
   uint64_t start_height = hf_version == 1 ? 0 : wallet_hard_forks[fork_index].height;
   uint64_t end_height = fork_index == wallet_num_hard_forks - 1
     ? std::numeric_limits<uint64_t>::max()
@@ -3554,7 +3554,7 @@ void wallet2::pull_and_parse_next_blocks(bool first, bool try_incremental, uint6
   {
     drop_from_short_history(short_chain_history, 3);
 
-    THROW_WALLET_EXCEPTION_IF(prev_blocks.size() != prev_parsed_blocks.size(), error::wallet_internal_error, "size mismatch");
+    THROW_WALLET_EXCEPTION_IF(prev_blocks.size() != prev_parsed_blocks.size(), error::wallet_internal_error, "大小不匹配");
 
     // prepend the last 3 blocks, should be enough to guard against a block or two's reorg
     auto s = std::next(prev_parsed_blocks.rbegin(), std::min((size_t)3, prev_parsed_blocks.size())).base();
@@ -3577,7 +3577,7 @@ void wallet2::pull_and_parse_next_blocks(bool first, bool try_incremental, uint6
       tpool.submit(&waiter, boost::bind(&wallet2::parse_block_round, this, std::cref(blocks[i].block),
         std::ref(parsed_blocks[i].block), std::ref(parsed_blocks[i].hash), std::ref(parsed_blocks[i].error)), true);
     }
-    THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+    THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "线程池发生异常");
     for (size_t i = 0; i < blocks.size(); ++i)
     {
       if (parsed_blocks[i].error)
@@ -3620,7 +3620,7 @@ void wallet2::pull_and_parse_next_blocks(bool first, bool try_incremental, uint6
         }, true);
       }
     }
-    THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+    THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "线程池发生异常");
     last = !blocks.empty() && cryptonote::get_block_height(parsed_blocks.back().block) + 1 == current_height;
   }
   catch(...)
@@ -4016,7 +4016,7 @@ bool wallet2::fast_refresh(uint64_t stop_height, uint64_t &blocks_start_height, 
       return true;
     if (blocks_start_height < m_blockchain.offset())
     {
-      MERROR("Blocks start before blockchain offset: " << blocks_start_height << " " << m_blockchain.offset());
+      MERROR("区块起始高度早于区块链偏移：" << blocks_start_height << " " << m_blockchain.offset());
       return true;
     }
     current_index = blocks_start_height;
@@ -4239,8 +4239,8 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
           short_chain_history.clear();
           get_short_chain_history(short_chain_history);
           fast_refresh(stop_height, blocks_start_height, short_chain_history, true);
-          THROW_WALLET_EXCEPTION_IF((m_blockchain.size() == stop_height || (m_blockchain.size() == 1 && stop_height == 0) ? false : true), error::wallet_internal_error, "Unexpected hashchain size");
-          THROW_WALLET_EXCEPTION_IF(m_blockchain.offset() != 0, error::wallet_internal_error, "Unexpected hashchain offset");
+          THROW_WALLET_EXCEPTION_IF((m_blockchain.size() == stop_height || (m_blockchain.size() == 1 && stop_height == 0) ? false : true), error::wallet_internal_error, "哈希链大小异常");
+          THROW_WALLET_EXCEPTION_IF(m_blockchain.offset() != 0, error::wallet_internal_error, "哈希链偏移异常");
           for (const auto &h: tip)
             m_blockchain.push_back(h);
           short_chain_history.clear();
@@ -4257,7 +4257,7 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
         }
         blocks_fetched += added_blocks;
       }
-      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "线程池发生异常");
 
       // handle error from async fetching thread
       if (error)
@@ -4265,7 +4265,7 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
         if (exception)
           std::rethrow_exception(exception);
         else
-          throw std::runtime_error("proxy exception in refresh thread");
+          throw std::runtime_error("刷新线程发生代理异常");
       }
 
       m_has_ever_refreshed_from_node = true;
@@ -4291,28 +4291,28 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
     catch (const tools::error::password_needed&)
     {
       blocks_fetched += added_blocks;
-      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "线程池发生异常");
       throw;
     }
     catch (const error::deprecated_rpc_access&)
     {
-      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "线程池发生异常");
       throw;
     }
     catch (const error::reorg_depth_error&)
     {
-      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "线程池发生异常");
       throw;
     }
     catch (const error::incorrect_fork_version&)
     {
-      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "线程池发生异常");
       throw;
     }
     catch (const std::exception&)
     {
       blocks_fetched += added_blocks;
-      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "线程池发生异常");
       if(try_count < 3)
       {
         LOG_PRINT_L1("Another try pull_blocks (try_count=" << try_count << ")...");
@@ -5036,7 +5036,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
   wallet2::keys_file_data keys_file_data;
   bool encrypted_secret_keys = false;
   bool r = ::serialization::parse_binary(keys_buf, keys_file_data);
-  THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "internal error: failed to deserialize keys buffer");
+  THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "内部错误：密钥缓冲区反序列化失败");
   crypto::chacha_key key;
   crypto::generate_chacha_key(password.data(), password.size(), key, m_kdf_rounds);
   std::string account_data;
@@ -5599,7 +5599,7 @@ void wallet2::create_keys_file(const std::string &wallet_, bool watch_only, cons
     if (create_address_file)
     {
       r = save_to_file(m_wallet_file + ".address.txt", m_account.get_public_address_str(m_nettype), true);
-      if(!r) MERROR("String with address text not saved");
+      if(!r) MERROR("地址文本未保存");
     }
   }
 }
@@ -6200,7 +6200,7 @@ std::string wallet2::exchange_multisig_keys(const epee::wipeable_string &passwor
       if (boost::filesystem::exists(m_wallet_file + ".address.txt"))
       {
         r = this->save_to_file(m_wallet_file + ".address.txt", m_account.get_public_address_str(m_nettype), true);
-        if(!r) MERROR("String with address text not saved");
+        if(!r) MERROR("地址文本未保存");
       }
     }
 
@@ -6600,7 +6600,7 @@ void wallet2::load(const std::string& wallet_, const epee::wipeable_string& pass
 
   // determine if loading from file system or string buffer
   bool use_fs = !wallet_.empty();
-  THROW_WALLET_EXCEPTION_IF((use_fs && !keys_buf.empty()) || (!use_fs && keys_buf.empty()), error::file_read_error, "must load keys either from file system or from buffer");\
+  THROW_WALLET_EXCEPTION_IF((use_fs && !keys_buf.empty()) || (!use_fs && keys_buf.empty()), error::file_read_error, "必须从文件系统或缓冲区加载密钥");\
 
   boost::system::error_code e;
   if (use_fs)
@@ -6621,7 +6621,7 @@ void wallet2::load(const std::string& wallet_, const epee::wipeable_string& pass
   }
   else if (!load_keys_buf(keys_buf, password))
   {
-    THROW_WALLET_EXCEPTION_IF(true, error::file_read_error, "failed to load keys from buffer");
+    THROW_WALLET_EXCEPTION_IF(true, error::file_read_error, "从缓冲区加载密钥失败");
   }
 
   wallet_keys_unlocker unlocker(*this, &password);
@@ -6906,7 +6906,7 @@ void wallet2::trim_hashchain()
     }
     catch(...)
     {
-      MERROR("Failed to request block header from daemon, hash chain may be unable to sync till the wallet is loaded with a usable daemon");
+      MERROR("从守护进程请求区块头失败，哈希链可能无法同步，直到钱包连接到可用的守护进程");
     }
   }
   if (height > 0 && m_blockchain.size() > height)
@@ -6998,7 +6998,7 @@ void wallet2::store_to(const std::string &path, const epee::wipeable_string &pas
 
   // get wallet cache data
   boost::optional<wallet2::cache_file_data> cache_file_data = get_cache_file_data();
-  THROW_WALLET_EXCEPTION_IF(cache_file_data == boost::none, error::wallet_internal_error, "failed to generate wallet cache data");
+  THROW_WALLET_EXCEPTION_IF(cache_file_data == boost::none, error::wallet_internal_error, "生成钱包缓存数据失败");
 
   const std::string new_file = same_file ? m_wallet_file + ".new" : path;
   const std::string old_file = m_wallet_file;
@@ -7700,12 +7700,12 @@ crypto::hash wallet2::get_payment_id(const pending_tx &ptx) const
     {
       if (ptx.dests.empty())
       {
-        MWARNING("Encrypted payment id found, but no destinations public key, cannot decrypt");
+        MWARNING("发现已加密付款 ID，但没有收款目标公钥，无法解密");
         return crypto::null_hash;
       }
       if (ptx.tx_key == crypto::null_skey)
       {
-        MWARNING("Encrypted payment id found, but no tx secret key, cannot decrypt");
+        MWARNING("发现已加密付款 ID，但没有交易私钥，无法解密");
         return crypto::null_hash;
       }
       if (m_account.get_device().decrypt_payment_id(payment_id8, ptx.dests[0].addr.m_view_public_key, ptx.tx_key))
@@ -7948,7 +7948,7 @@ bool wallet2::sign_tx(unsigned_tx_set &exported_txs, std::vector<wallet2::pendin
   for (size_t n = 0; n < exported_txs.txes.size(); ++n)
   {
     tools::wallet2::tx_construction_data &sd = exported_txs.txes[n];
-    THROW_WALLET_EXCEPTION_IF(sd.sources.empty(), error::wallet_internal_error, "Empty sources");
+    THROW_WALLET_EXCEPTION_IF(sd.sources.empty(), error::wallet_internal_error, "来源为空");
     THROW_WALLET_EXCEPTION_IF(sd.unlock_time, error::nonzero_unlock_time);
     LOG_PRINT_L1(" " << (n+1) << ": " << sd.sources.size() << " inputs, ring size " << sd.sources[0].outputs.size());
     signed_txes.ptx.push_back(pending_tx());
@@ -8023,7 +8023,7 @@ bool wallet2::sign_tx(unsigned_tx_set &exported_txs, std::vector<wallet2::pendin
     hwdev.set_mode(hw::device::TRANSACTION_PARSE);
     if (!hwdev.generate_key_derivation(tx_pub_key, keys.m_view_secret_key, derivation))
     {
-      MWARNING("Failed to generate key derivation from tx pubkey in " << cryptonote::get_transaction_hash(tx) << ", skipping");
+      MWARNING("根据交易公钥生成密钥派生失败：" << cryptonote::get_transaction_hash(tx) << ", skipping");
       static_assert(sizeof(derivation) == sizeof(rct::key), "Mismatched sizes of key_derivation and rct::key");
       memcpy(&derivation, rct::identity().bytes, sizeof(derivation));
     }
@@ -8032,7 +8032,7 @@ bool wallet2::sign_tx(unsigned_tx_set &exported_txs, std::vector<wallet2::pendin
       additional_derivations.push_back({});
       if (!hwdev.generate_key_derivation(additional_tx_pub_keys[i], keys.m_view_secret_key, additional_derivations.back()))
       {
-        MWARNING("Failed to generate key derivation from additional tx pubkey in " << cryptonote::get_transaction_hash(tx) << ", skipping");
+        MWARNING("根据附加交易公钥生成密钥派生失败：" << cryptonote::get_transaction_hash(tx) << ", skipping");
         memcpy(&additional_derivations.back(), rct::identity().bytes, sizeof(crypto::key_derivation));
       }
     }
@@ -8051,7 +8051,7 @@ bool wallet2::sign_tx(unsigned_tx_set &exported_txs, std::vector<wallet2::pendin
       if (generate_key_image_helper(keys, m_subaddresses, output_public_key, tx_pub_key, additional_tx_pub_keys, i, in_ephemeral, ki, hwdev))
         signed_txes.tx_key_images[output_public_key] = ki;
       else
-        MERROR("Failed to calculate key image");
+        MERROR("计算密钥镜像失败");
     }
   }
 
@@ -8467,7 +8467,7 @@ bool wallet2::sign_multisig_tx(multisig_tx_set &exported_txs_inout, std::vector<
   std::vector<crypto::hash> signed_txids;
   std::vector<std::pair<crypto::hash, size_t>> signed_tx_key_indices;
 
-  THROW_WALLET_EXCEPTION_IF(exported_txs.m_ptx.empty(), error::wallet_internal_error, "No tx found");
+  THROW_WALLET_EXCEPTION_IF(exported_txs.m_ptx.empty(), error::wallet_internal_error, "未找到交易");
 
   const crypto::public_key local_signer = get_multisig_signer_public_key();
 
@@ -8505,7 +8505,7 @@ bool wallet2::sign_multisig_tx(multisig_tx_set &exported_txs_inout, std::vector<
   {
     tools::wallet2::pending_tx &ptx = exported_txs.m_ptx[n];
     const tools::wallet2::tx_construction_data &sd = ptx.construction_data;
-    THROW_WALLET_EXCEPTION_IF(ptx.multisig_sigs.empty(), error::wallet_internal_error, "No signatures found in multisig tx");
+    THROW_WALLET_EXCEPTION_IF(ptx.multisig_sigs.empty(), error::wallet_internal_error, "多重签名交易中未找到签名");
 
     LOG_PRINT_L1(" " << (n+1) << ": " << sd.sources.size() << " inputs, ring size " << (sd.sources[0].outputs.size()) <<
         ", signed by " << exported_txs.m_signers.size() << "/" << m_multisig_threshold);
@@ -8600,7 +8600,7 @@ bool wallet2::sign_multisig_tx(multisig_tx_set &exported_txs_inout, std::vector<
       {
         if (sig.ignore.find(local_signer) == sig.ignore.end() && !keys_intersect(sig.ignore, exported_txs.m_signers))
         {
-          THROW_WALLET_EXCEPTION_IF(found, error::wallet_internal_error, "More than one transaction is final");
+          THROW_WALLET_EXCEPTION_IF(found, error::wallet_internal_error, "存在多于一笔已完成的交易");
           THROW_WALLET_EXCEPTION_IF(
             not multisig_tx_builder.finalize_tx(ptx.construction_data.sources, sig.c_0, sig.s, ptx.tx),
             error::wallet_internal_error,
@@ -8755,14 +8755,14 @@ uint64_t wallet2::get_base_fee(fee_priority priority)
     boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_base_fee_estimate_2021_scaling(FEE_ESTIMATE_GRACE_BLOCKS, fees);
     if (result)
     {
-      MERROR("Failed to determine base fee, using default");
+      MERROR("确定基础手续费失败，将使用默认值");
       return FEE_PER_BYTE;
     }
 
     const auto priority_index = fee_priority_utilities::as_integral(priority);
     if (priority_index >= fees.size())
     {
-      MERROR("Failed to determine base fee for priority " << priority_index << ", using default");
+      MERROR("确定优先级 " << priority_index << " 的基础手续费失败，将使用默认值");
       return FEE_PER_BYTE;
     }
     return fees[priority_index];
@@ -8879,7 +8879,7 @@ fee_priority wallet2::adjust_priority(fee_priority priority)
       const size_t N = 10;
       if (m_blockchain.size() < N)
       {
-        MERROR("The blockchain is too short");
+        MERROR("区块链太短");
         return fee_priority::Unimportant;
       }
       cryptonote::COMMAND_RPC_GET_BLOCK_HEADERS_RANGE::request getbh_req = AUTO_VAL_INIT(getbh_req);
@@ -8895,7 +8895,7 @@ fee_priority wallet2::adjust_priority(fee_priority priority)
 
       if (getbh_res.headers.size() != N)
       {
-        MERROR("Bad blockheaders size");
+        MERROR("区块头数量错误");
         return fee_priority::Unimportant;
       }
       size_t block_weight_sum = 0;
@@ -8939,7 +8939,7 @@ bool wallet2::set_ring_database(const std::string &filename)
     }
     catch (const std::exception &e)
     {
-      MERROR("Failed to initialize ringdb: " << e.what());
+      MERROR("初始化环数据库失败：" << e.what());
       m_ring_database = "";
       return false;
     }
@@ -9086,7 +9086,7 @@ bool wallet2::unset_ring(const crypto::hash &txid)
   crypto::hash tx_hash;
   if (!get_pruned_tx(res.txs.front(), tx, tx_hash))
     return false;
-  THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "Failed to get the right transaction from daemon");
+  THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "未从守护进程获取到正确的交易");
 
   try { return m_ringdb->remove_rings(get_ringdb_key(), tx); }
   catch (const std::exception &e) { return false; }
@@ -9249,7 +9249,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
     // check whether we're shortly after the fork
     uint64_t height;
     boost::optional<std::string> result = m_node_rpc_proxy.get_height(height);
-    THROW_WALLET_EXCEPTION_IF(result, error::wallet_internal_error, "Failed to get height");
+    THROW_WALLET_EXCEPTION_IF(result, error::wallet_internal_error, "获取高度失败");
     bool is_shortly_after_segregation_fork = height >= segregation_fork_height && height < segregation_fork_height + SEGREGATION_FORK_VICINITY;
     bool is_after_segregation_fork = height >= segregation_fork_height;
 
@@ -9335,11 +9335,11 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
         {
           if (d.amount == amount)
           {
-            THROW_WALLET_EXCEPTION_IF(d.data.start_height > segregation_fork_height, error::get_output_distribution, "Distribution start_height too high");
-            THROW_WALLET_EXCEPTION_IF(segregation_fork_height - d.data.start_height >= d.data.distribution.size(), error::get_output_distribution, "Distribution size too small");
-            THROW_WALLET_EXCEPTION_IF(segregation_fork_height - RECENT_OUTPUT_BLOCKS - d.data.start_height >= d.data.distribution.size(), error::get_output_distribution, "Distribution size too small");
-            THROW_WALLET_EXCEPTION_IF(segregation_fork_height <= RECENT_OUTPUT_BLOCKS, error::wallet_internal_error, "Fork height too low");
-            THROW_WALLET_EXCEPTION_IF(segregation_fork_height - RECENT_OUTPUT_BLOCKS < d.data.start_height, error::get_output_distribution, "Bad start height");
+            THROW_WALLET_EXCEPTION_IF(d.data.start_height > segregation_fork_height, error::get_output_distribution, "分布数据起始高度过高");
+            THROW_WALLET_EXCEPTION_IF(segregation_fork_height - d.data.start_height >= d.data.distribution.size(), error::get_output_distribution, "分布数据大小过小");
+            THROW_WALLET_EXCEPTION_IF(segregation_fork_height - RECENT_OUTPUT_BLOCKS - d.data.start_height >= d.data.distribution.size(), error::get_output_distribution, "分布数据大小过小");
+            THROW_WALLET_EXCEPTION_IF(segregation_fork_height <= RECENT_OUTPUT_BLOCKS, error::wallet_internal_error, "分叉高度过低");
+            THROW_WALLET_EXCEPTION_IF(segregation_fork_height - RECENT_OUTPUT_BLOCKS < d.data.start_height, error::get_output_distribution, "起始高度错误");
             uint64_t till_fork = d.data.distribution[segregation_fork_height - d.data.start_height];
             uint64_t recent = till_fork - d.data.distribution[segregation_fork_height - RECENT_OUTPUT_BLOCKS - d.data.start_height];
             segregation_limit[amount] = std::make_pair(till_fork, recent);
@@ -9347,7 +9347,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
             break;
           }
         }
-        THROW_WALLET_EXCEPTION_IF(!found, error::get_output_distribution, "Requested amount not found in response");
+        THROW_WALLET_EXCEPTION_IF(!found, error::get_output_distribution, "响应中未找到请求的金额");
       }
     }
 
@@ -9595,7 +9595,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
           const char *type = "";
           if (amount == 0)
           {
-            THROW_WALLET_EXCEPTION_IF(!gamma, error::wallet_internal_error, "No gamma picker");
+            THROW_WALLET_EXCEPTION_IF(!gamma, error::wallet_internal_error, "没有可用的 gamma 选择器");
             // gamma distribution
             if (num_found -1 < recent_outputs_count + pre_fork_outputs_count)
             {
@@ -9866,7 +9866,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
     rings.push_back(std::make_pair(td.m_key_image, std::move(ring)));
   }
   if (!set_rings(rings, false))
-    MERROR("Failed to set rings");
+    MERROR("设置环失败");
 }
 
 template<typename T>
@@ -9879,7 +9879,7 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
   // throw if attempting a transaction with no destinations
   THROW_WALLET_EXCEPTION_IF(dsts.empty(), error::zero_destination);
 
-  THROW_WALLET_EXCEPTION_IF(m_multisig, error::wallet_internal_error, "Multisig wallets cannot spend non rct outputs");
+  THROW_WALLET_EXCEPTION_IF(m_multisig, error::wallet_internal_error, "多重签名钱包不能花费非 RingCT 输出");
 
   uint64_t upper_transaction_weight_limit = get_upper_transaction_weight_limit();
   uint64_t needed_money = fee;
@@ -9906,7 +9906,7 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
 
   uint32_t subaddr_account = m_transfers[*selected_transfers.begin()].m_subaddr_index.major;
   for (auto i = ++selected_transfers.begin(); i != selected_transfers.end(); ++i)
-    THROW_WALLET_EXCEPTION_IF(subaddr_account != m_transfers[*i].m_subaddr_index.major, error::wallet_internal_error, "the tx uses funds from multiple accounts");
+    THROW_WALLET_EXCEPTION_IF(subaddr_account != m_transfers[*i].m_subaddr_index.major, error::wallet_internal_error, "交易使用了多个账户的资金");
 
   if (outs.empty())
     get_outs(outs, selected_transfers, fake_outputs_count, false, valid_public_keys_cache); // may throw
@@ -10070,7 +10070,7 @@ void wallet2::transfer_selected_rct(std::vector<cryptonote::tx_destination_entry
 
   uint32_t subaddr_account = m_transfers[*selected_transfers.begin()].m_subaddr_index.major;
   for (auto i = ++selected_transfers.begin(); i != selected_transfers.end(); ++i)
-    THROW_WALLET_EXCEPTION_IF(subaddr_account != m_transfers[*i].m_subaddr_index.major, error::wallet_internal_error, "the tx uses funds from multiple accounts");
+    THROW_WALLET_EXCEPTION_IF(subaddr_account != m_transfers[*i].m_subaddr_index.major, error::wallet_internal_error, "交易使用了多个账户的资金");
 
   if (outs.empty())
     get_outs(outs, selected_transfers, fake_outputs_count, all_rct, valid_public_keys_cache); // may throw
@@ -11166,7 +11166,7 @@ bool wallet2::sanity_check(const std::vector<wallet2::pending_tx> &ptx_vector, c
   MDEBUG("sanity_check: " << ptx_vector.size() << " txes, " << dsts.size() << " destinations, subtract_fee_from_outputs " <<
     (subtract_fee_from_outputs.size() ? "enabled" : "disabled"));
 
-  THROW_WALLET_EXCEPTION_IF(ptx_vector.empty(), error::wallet_internal_error, "No transactions");
+  THROW_WALLET_EXCEPTION_IF(ptx_vector.empty(), error::wallet_internal_error, "没有交易");
   THROW_WALLET_EXCEPTION_IF(!subtract_fee_from_outputs.empty() && ptx_vector.size() != 1,
     error::wallet_internal_error, "feature subtractfeefrom not supported for split transactions");
 
@@ -11260,7 +11260,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_all(uint64_t below
   const uint64_t fractional_threshold = (base_fee * tx_weight_per_ring) / (use_per_byte_fee ? 1 : 1024);
   std::unordered_set<crypto::public_key> valid_public_keys_cache;
 
-  THROW_WALLET_EXCEPTION_IF(unlocked_balance(subaddr_account, false) == 0, error::wallet_internal_error, "No unlocked balance in the specified account");
+  THROW_WALLET_EXCEPTION_IF(unlocked_balance(subaddr_account, false) == 0, error::wallet_internal_error, "指定账户没有可用余额");
 
   std::map<uint32_t, std::pair<std::vector<size_t>, std::vector<size_t>>> unused_transfer_dust_indices_per_subaddr;
 
@@ -11286,8 +11286,8 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_all(uint64_t below
       }
     }
   }
-  THROW_WALLET_EXCEPTION_IF(!fund_found, error::wallet_internal_error, "No unlocked balance in the specified subaddress(es)");
-  THROW_WALLET_EXCEPTION_IF(unused_transfer_dust_indices_per_subaddr.empty(), error::wallet_internal_error, "The smallest amount found is not below the specified threshold");
+  THROW_WALLET_EXCEPTION_IF(!fund_found, error::wallet_internal_error, "指定子地址没有可用余额");
+  THROW_WALLET_EXCEPTION_IF(unused_transfer_dust_indices_per_subaddr.empty(), error::wallet_internal_error, "找到的最小金额不低于指定阈值");
 
   if (subaddr_indices.empty())
   {
@@ -11460,7 +11460,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
       if (outputs > 1)
         tx.dsts.push_back(tx_destination_entry(1, address, is_subaddress));
 
-      THROW_WALLET_EXCEPTION_IF(needed_fee > available_for_fee, error::wallet_internal_error, "Transaction cannot pay for itself");
+      THROW_WALLET_EXCEPTION_IF(needed_fee > available_for_fee, error::wallet_internal_error, "交易无法支付自身的手续费");
 
       do {
         LOG_PRINT_L2("We made a tx, adjusting fee and saving it, we need " << print_money(needed_fee) << " and we have " << print_money(test_ptx.fee));
@@ -11671,7 +11671,7 @@ bool wallet2::use_fork_rules(uint8_t version, int64_t early_blocks)
 {
   uint64_t height, earliest_height;
   boost::optional<std::string> result = m_node_rpc_proxy.get_height(height);
-  THROW_WALLET_EXCEPTION_IF(result, error::wallet_internal_error, "Failed to get height");
+  THROW_WALLET_EXCEPTION_IF(result, error::wallet_internal_error, "获取高度失败");
   result = m_node_rpc_proxy.get_earliest_height(version, earliest_height);
   THROW_WALLET_EXCEPTION_IF(result, error::wallet_internal_error, "Failed to get earliest fork height");
 
@@ -11784,7 +11784,7 @@ uint64_t wallet2::get_num_rct_outputs()
     const boost::lock_guard<boost::recursive_mutex> lock{m_daemon_rpc_mutex};
     bool r = net_utils::invoke_http_json_rpc("/json_rpc", "get_output_histogram", req_t, resp_t, *m_http_client, rpc_timeout);
     THROW_ON_RPC_RESPONSE_ERROR(r, {}, resp_t, "get_output_histogram", error::get_histogram_error, resp_t.status);
-    THROW_WALLET_EXCEPTION_IF(resp_t.histogram.size() != 1, error::get_histogram_error, "Expected exactly one response");
+    THROW_WALLET_EXCEPTION_IF(resp_t.histogram.size() != 1, error::get_histogram_error, "预期只返回一个结果");
     THROW_WALLET_EXCEPTION_IF(resp_t.histogram[0].amount != 0, error::get_histogram_error, "Expected 0 amount");
   }
 
@@ -11793,7 +11793,7 @@ uint64_t wallet2::get_num_rct_outputs()
 //----------------------------------------------------------------------------------------------------
 const wallet2::transfer_details &wallet2::get_transfer_details(size_t idx) const
 {
-  THROW_WALLET_EXCEPTION_IF(idx >= m_transfers.size(), error::wallet_internal_error, "Bad transfer index");
+  THROW_WALLET_EXCEPTION_IF(idx >= m_transfers.size(), error::wallet_internal_error, "交易索引错误");
   return m_transfers[idx];
 }
 //----------------------------------------------------------------------------------------------------
@@ -11919,9 +11919,9 @@ bool wallet2::get_tx_key(const crypto::hash &txid, crypto::secret_key &tx_key, s
     crypto::hash tx_hash{};
     cryptonote::blobdata tx_data;
     bool ok = get_pruned_tx(res.txs.front(), tx, tx_hash);
-    THROW_WALLET_EXCEPTION_IF(!ok, error::wallet_internal_error, "Failed to parse transaction from daemon");
+    THROW_WALLET_EXCEPTION_IF(!ok, error::wallet_internal_error, "解析守护进程返回的交易失败");
     THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error,
-                              "Failed to get the right transaction from daemon");
+                              "未从守护进程获取到正确的交易");
 
     tx_key_data.tx_prefix_hash = std::string(get_transaction_prefix_hash(tx).data, 32);
   }
@@ -11967,9 +11967,9 @@ void wallet2::set_tx_key(const crypto::hash &txid, const crypto::secret_key &tx_
   crypto::hash tx_hash;
   THROW_WALLET_EXCEPTION_IF(!get_pruned_tx(res.txs[0], tx, tx_hash), error::wallet_internal_error,
       "从守护进程获取交易失败");
-  THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "txid mismatch");
+  THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "交易 ID 不匹配");
   std::vector<tx_extra_field> tx_extra_fields;
-  THROW_WALLET_EXCEPTION_IF(!parse_tx_extra(tx.extra, tx_extra_fields), error::wallet_internal_error, "Transaction extra has unsupported format");
+  THROW_WALLET_EXCEPTION_IF(!parse_tx_extra(tx.extra, tx_extra_fields), error::wallet_internal_error, "交易附加数据格式不受支持");
   tx_extra_pub_key pub_key_field;
   bool found = false;
   size_t index = 0;
@@ -12024,8 +12024,8 @@ std::string wallet2::get_spend_proof(const crypto::hash &txid, const std::string
 
   cryptonote::transaction tx;
   crypto::hash tx_hash;
-  THROW_WALLET_EXCEPTION_IF(!get_pruned_tx(res.txs[0], tx, tx_hash), error::wallet_internal_error, "Failed to get tx from daemon");
-  THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "Failed to get the right transaction from daemon");
+  THROW_WALLET_EXCEPTION_IF(!get_pruned_tx(res.txs[0], tx, tx_hash), error::wallet_internal_error, "从守护进程获取交易失败");
+  THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "未从守护进程获取到正确的交易");
 
   std::vector<std::vector<crypto::signature>> signatures;
 
@@ -12045,7 +12045,7 @@ std::string wallet2::get_spend_proof(const crypto::hash &txid, const std::string
     const auto found = m_key_images.find(in_key->k_image);
     if(found == m_key_images.end())
     {
-      THROW_WALLET_EXCEPTION_IF(i > 0, error::wallet_internal_error, "subset of key images belong to us, very weird!");
+      THROW_WALLET_EXCEPTION_IF(i > 0, error::wallet_internal_error, "只有部分密钥镜像属于当前钱包，这种情况非常异常！");
       THROW_WALLET_EXCEPTION_IF(true, error::wallet_internal_error, "此交易不是由当前钱包生成的！");
     }
 
@@ -12061,12 +12061,12 @@ std::string wallet2::get_spend_proof(const crypto::hash &txid, const std::string
     crypto::key_image in_img;
     THROW_WALLET_EXCEPTION_IF(!generate_key_image_helper(m_account.get_keys(), m_subaddresses, in_tx_out_pkey, in_tx_pub_key, in_additionakl_tx_pub_keys, in_td.m_internal_output_index, in_ephemeral, in_img, m_account.get_device()),
       error::wallet_internal_error, "failed to generate key image");
-    THROW_WALLET_EXCEPTION_IF(in_key->k_image != in_img, error::wallet_internal_error, "key image mismatch");
+    THROW_WALLET_EXCEPTION_IF(in_key->k_image != in_img, error::wallet_internal_error, "密钥镜像不匹配");
 
     // get output pubkeys in the ring
     const std::vector<uint64_t> absolute_offsets = cryptonote::relative_output_offsets_to_absolute(in_key->key_offsets);
     const size_t ring_size = in_key->key_offsets.size();
-    THROW_WALLET_EXCEPTION_IF(absolute_offsets.size() != ring_size, error::wallet_internal_error, "absolute offsets size is wrong");
+    THROW_WALLET_EXCEPTION_IF(absolute_offsets.size() != ring_size, error::wallet_internal_error, "绝对偏移量大小错误");
     COMMAND_RPC_GET_OUTPUTS_BIN::request req = AUTO_VAL_INIT(req);
     req.outputs.resize(ring_size);
     for (size_t j = 0; j < ring_size; ++j)
@@ -12100,7 +12100,7 @@ std::string wallet2::get_spend_proof(const crypto::hash &txid, const std::string
         break;
       }
     }
-    THROW_WALLET_EXCEPTION_IF(sec_index >= ring_size, error::wallet_internal_error, "secret index not found");
+    THROW_WALLET_EXCEPTION_IF(sec_index >= ring_size, error::wallet_internal_error, "未找到私钥索引");
 
     // generate ring sig for this input
     signatures.push_back(std::vector<crypto::signature>());
@@ -12142,7 +12142,7 @@ bool wallet2::check_spend_proof(const crypto::hash &txid, const std::string &mes
   cryptonote::transaction tx;
   crypto::hash tx_hash;
   THROW_WALLET_EXCEPTION_IF(!get_pruned_tx(res.txs[0], tx, tx_hash), error::wallet_internal_error, "failed to get tx from daemon");
-  THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "Failed to get the right transaction from daemon");
+  THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "未从守护进程获取到正确的交易");
 
   // check signature size
   size_t num_sigs = 0;
@@ -12221,7 +12221,7 @@ bool wallet2::check_spend_proof(const crypto::hash &txid, const std::string &mes
       return false;
     ++sig_iter;
   }
-  THROW_WALLET_EXCEPTION_IF(sig_iter != signatures.cend(), error::wallet_internal_error, "Signature iterator didn't reach the end");
+  THROW_WALLET_EXCEPTION_IF(sig_iter != signatures.cend(), error::wallet_internal_error, "签名迭代器未到达末尾");
   return true;
 }
 //----------------------------------------------------------------------------------------------------
@@ -12272,7 +12272,7 @@ void wallet2::check_tx_key_helper(const cryptonote::transaction &tx, const crypt
 void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_derivation &derivation, const std::vector<crypto::key_derivation> &additional_derivations, const cryptonote::account_public_address &address, uint64_t &received, bool &in_pool, uint64_t &confirmations)
 {
   uint32_t rpc_version;
-  THROW_WALLET_EXCEPTION_IF(!check_connection(&rpc_version), error::wallet_internal_error, "Failed to connect to daemon: " + get_daemon_address());
+  THROW_WALLET_EXCEPTION_IF(!check_connection(&rpc_version), error::wallet_internal_error, "连接守护进程失败：" + get_daemon_address());
 
   COMMAND_RPC_GET_TRANSACTIONS::request req;
   COMMAND_RPC_GET_TRANSACTIONS::response res;
@@ -12291,10 +12291,10 @@ void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_de
   cryptonote::transaction tx;
   crypto::hash tx_hash;
   ok = get_pruned_tx(res.txs.front(), tx, tx_hash);
-  THROW_WALLET_EXCEPTION_IF(!ok, error::wallet_internal_error, "Failed to parse transaction from daemon");
+  THROW_WALLET_EXCEPTION_IF(!ok, error::wallet_internal_error, "解析守护进程返回的交易失败");
 
   THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error,
-    "Failed to get the right transaction from daemon");
+    "未从守护进程获取到正确的交易");
   THROW_WALLET_EXCEPTION_IF(!additional_derivations.empty() && additional_derivations.size() != tx.vout.size(), error::wallet_internal_error,
     "The size of additional derivations is wrong");
 
@@ -12334,7 +12334,7 @@ bool wallet2::is_out_to_acc(const cryptonote::account_public_address &address, c
   {
     // if view tag match, run slower check deriving output pub key and comparing to expected
     r = crypto::derive_public_key(derivation, output_index, address.m_spend_public_key, derived_out_key);
-    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to derive public key");
+    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "派生公钥失败");
     if (out_key == derived_out_key)
     {
       found = true;
@@ -12352,7 +12352,7 @@ bool wallet2::is_out_to_acc(const cryptonote::account_public_address &address, c
       if (out_can_be_to_acc(view_tag_opt, additional_derivation, output_index))
       {
         r = crypto::derive_public_key(additional_derivation, output_index, address.m_spend_public_key, derived_out_key);
-        THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to derive public key");
+        THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "派生公钥失败");
         if (out_key == derived_out_key)
         {
           found = true;
@@ -12385,9 +12385,9 @@ std::string wallet2::get_tx_proof(const crypto::hash &txid, const cryptonote::ac
     cryptonote::transaction tx;
     crypto::hash tx_hash;
     ok = get_pruned_tx(res.txs.front(), tx, tx_hash);
-    THROW_WALLET_EXCEPTION_IF(!ok, error::wallet_internal_error, "Failed to parse transaction from daemon");
+    THROW_WALLET_EXCEPTION_IF(!ok, error::wallet_internal_error, "解析守护进程返回的交易失败");
 
-    THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "Failed to get the right transaction from daemon");
+    THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "未从守护进程获取到正确的交易");
 
     // determine if the address is found in the subaddress hash table (i.e. whether the proof is outbound or inbound)
     crypto::secret_key tx_key = crypto::null_skey;
@@ -12495,10 +12495,10 @@ std::string wallet2::get_tx_proof(const cryptonote::transaction &tx, const crypt
 
   // check if this address actually received any funds
   crypto::key_derivation derivation;
-  THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(shared_secret[0], rct::rct2sk(rct::I), derivation), error::wallet_internal_error, "Failed to generate key derivation");
+  THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(shared_secret[0], rct::rct2sk(rct::I), derivation), error::wallet_internal_error, "生成密钥派生失败");
   std::vector<crypto::key_derivation> additional_derivations(num_sigs - 1);
   for (size_t i = 1; i < num_sigs; ++i)
-    THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(shared_secret[i], rct::rct2sk(rct::I), additional_derivations[i - 1]), error::wallet_internal_error, "Failed to generate key derivation");
+    THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(shared_secret[i], rct::rct2sk(rct::I), additional_derivations[i - 1]), error::wallet_internal_error, "生成密钥派生失败");
   uint64_t received;
   check_tx_key_helper(tx, derivation, additional_derivations, address, received);
   THROW_WALLET_EXCEPTION_IF(!received, error::wallet_internal_error, tr("此交易未收到资金。"));
@@ -12531,9 +12531,9 @@ bool wallet2::check_tx_proof(const crypto::hash &txid, const cryptonote::account
   cryptonote::transaction tx;
   crypto::hash tx_hash;
   ok = get_pruned_tx(res.txs.front(), tx, tx_hash);
-  THROW_WALLET_EXCEPTION_IF(!ok, error::wallet_internal_error, "Failed to parse transaction from daemon");
+  THROW_WALLET_EXCEPTION_IF(!ok, error::wallet_internal_error, "解析守护进程返回的交易失败");
 
-  THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "Failed to get the right transaction from daemon");
+  THROW_WALLET_EXCEPTION_IF(tx_hash != txid, error::wallet_internal_error, "未从守护进程获取到正确的交易");
 
   if (!check_tx_proof(tx, address, is_subaddress, message, sig_str, received))
     return false;
@@ -12636,12 +12636,12 @@ bool wallet2::check_tx_proof(const cryptonote::transaction &tx, const cryptonote
     // obtain key derivation by multiplying scalar 1 to the shared secret
     crypto::key_derivation derivation{};
     if (good_signature[0])
-      THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(shared_secret[0], rct::rct2sk(rct::I), derivation), error::wallet_internal_error, "Failed to generate key derivation");
+      THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(shared_secret[0], rct::rct2sk(rct::I), derivation), error::wallet_internal_error, "生成密钥派生失败");
 
     std::vector<crypto::key_derivation> additional_derivations(num_sigs - 1);
     for (size_t i = 1; i < num_sigs; ++i)
       if (good_signature[i])
-        THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(shared_secret[i], rct::rct2sk(rct::I), additional_derivations[i - 1]), error::wallet_internal_error, "Failed to generate key derivation");
+        THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(shared_secret[i], rct::rct2sk(rct::I), additional_derivations[i - 1]), error::wallet_internal_error, "生成密钥派生失败");
 
     check_tx_key_helper(tx, derivation, additional_derivations, address, received);
     return true;
@@ -12717,7 +12717,7 @@ std::string wallet2::get_reserve_proof(const boost::optional<std::pair<uint32_t,
 
     // get tx pub key 
     const crypto::public_key tx_pub_key = get_tx_pub_key_from_extra(td.m_tx, td.m_pk_index);
-    THROW_WALLET_EXCEPTION_IF(tx_pub_key == crypto::null_pkey, error::wallet_internal_error, "The tx public key isn't found");
+    THROW_WALLET_EXCEPTION_IF(tx_pub_key == crypto::null_pkey, error::wallet_internal_error, "未找到交易公钥");
     const std::vector<crypto::public_key> additional_tx_pub_keys = get_additional_tx_pub_keys_from_extra(td.m_tx);
 
     // determine which tx pub key was used for deriving the output key
@@ -12727,7 +12727,7 @@ std::string wallet2::get_reserve_proof(const boost::optional<std::pair<uint32_t,
       proof.shared_secret = rct::rct2pk(rct::scalarmultKey(rct::pk2rct(*tx_pub_key_used), rct::sk2rct(m_account.get_keys().m_view_secret_key)));
       crypto::key_derivation derivation;
       THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(proof.shared_secret, rct::rct2sk(rct::I), derivation),
-        error::wallet_internal_error, "Failed to generate key derivation");
+        error::wallet_internal_error, "生成密钥派生失败");
       crypto::public_key subaddress_spendkey;
       THROW_WALLET_EXCEPTION_IF(!derive_subaddress_public_key(td.get_public_key(), derivation, proof.index_in_tx, subaddress_spendkey),
         error::wallet_internal_error, "Failed to derive subaddress public key");
@@ -12747,7 +12747,7 @@ std::string wallet2::get_reserve_proof(const boost::optional<std::pair<uint32_t,
     crypto::key_image ki;
     cryptonote::keypair ephemeral;
     const bool r = cryptonote::generate_key_image_helper(m_account.get_keys(), m_subaddresses, td.get_public_key(), tx_pub_key,  additional_tx_pub_keys, td.m_internal_output_index, ephemeral, ki, m_account.get_device());
-    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to generate key image");
+    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "生成密钥镜像失败");
     THROW_WALLET_EXCEPTION_IF(ephemeral.pub != td.get_public_key(), error::wallet_internal_error, "Derived public key doesn't agree with the stored one");
 
     // generate signature for key image
@@ -12782,7 +12782,7 @@ std::string wallet2::get_reserve_proof(const boost::optional<std::pair<uint32_t,
 bool wallet2::check_reserve_proof(const cryptonote::account_public_address &address, const std::string &message, const std::string &sig_str, uint64_t &total, uint64_t &spent)
 {
   uint32_t rpc_version;
-  THROW_WALLET_EXCEPTION_IF(!check_connection(&rpc_version), error::wallet_internal_error, "Failed to connect to daemon: " + get_daemon_address());
+  THROW_WALLET_EXCEPTION_IF(!check_connection(&rpc_version), error::wallet_internal_error, "连接守护进程失败：" + get_daemon_address());
   THROW_WALLET_EXCEPTION_IF(rpc_version < MAKE_CORE_RPC_VERSION(1, 0), error::wallet_internal_error, "守护进程 RPC 版本过低");
 
   static constexpr char header_v1[] = "ReserveProofV1";
@@ -12875,9 +12875,9 @@ bool wallet2::check_reserve_proof(const cryptonote::account_public_address &addr
     cryptonote::transaction tx;
     crypto::hash tx_hash;
     ok = get_pruned_tx(gettx_res.txs[i], tx, tx_hash);
-    THROW_WALLET_EXCEPTION_IF(!ok, error::wallet_internal_error, "Failed to parse transaction from daemon");
+    THROW_WALLET_EXCEPTION_IF(!ok, error::wallet_internal_error, "解析守护进程返回的交易失败");
 
-    THROW_WALLET_EXCEPTION_IF(tx_hash != proof.txid, error::wallet_internal_error, "Failed to get the right transaction from daemon");
+    THROW_WALLET_EXCEPTION_IF(tx_hash != proof.txid, error::wallet_internal_error, "未从守护进程获取到正确的交易");
 
     THROW_WALLET_EXCEPTION_IF(proof.index_in_tx >= tx.vout.size(), error::wallet_internal_error, "index_in_tx is out of bound");
 
@@ -12886,7 +12886,7 @@ bool wallet2::check_reserve_proof(const cryptonote::account_public_address &addr
 
     // get tx pub key
     const crypto::public_key tx_pub_key = get_tx_pub_key_from_extra(tx);
-    THROW_WALLET_EXCEPTION_IF(tx_pub_key == crypto::null_pkey, error::wallet_internal_error, "The tx public key isn't found");
+    THROW_WALLET_EXCEPTION_IF(tx_pub_key == crypto::null_pkey, error::wallet_internal_error, "未找到交易公钥");
     const std::vector<crypto::public_key> additional_tx_pub_keys = get_additional_tx_pub_keys_from_extra(tx);
 
     // check signature for shared secret
@@ -12904,7 +12904,7 @@ bool wallet2::check_reserve_proof(const cryptonote::account_public_address &addr
 
     // check if the address really received the fund
     crypto::key_derivation derivation;
-    THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(proof.shared_secret, rct::rct2sk(rct::I), derivation), error::wallet_internal_error, "Failed to generate key derivation");
+    THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(proof.shared_secret, rct::rct2sk(rct::I), derivation), error::wallet_internal_error, "生成密钥派生失败");
     crypto::public_key subaddr_spendkey;
     THROW_WALLET_EXCEPTION_IF(!crypto::derive_subaddress_public_key(output_public_key, derivation, proof.index_in_tx, subaddr_spendkey),
         error::wallet_internal_error, "Failed to derive subaddress public key");
@@ -13317,7 +13317,7 @@ crypto::public_key wallet2::get_tx_pub_key_from_received_outs(const tools::walle
     const crypto::public_key tx_pub_key = pub_key_field.pub_key;
     crypto::key_derivation derivation;
     bool r = hwdev.generate_key_derivation(tx_pub_key, keys.m_view_secret_key, derivation);
-    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to generate key derivation");
+    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "生成密钥派生失败");
 
     for (size_t i = 0; i < td.m_tx.vout.size(); ++i)
     {
@@ -13397,7 +13397,7 @@ std::pair<uint64_t, std::vector<std::pair<crypto::key_image, crypto::signature>>
     crypto::key_image ki;
     cryptonote::keypair in_ephemeral;
     bool r = cryptonote::generate_key_image_helper(m_account.get_keys(), m_subaddresses, pkey, tx_pub_key, additional_tx_pub_keys, td.m_internal_output_index, in_ephemeral, ki, m_account.get_device());
-    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to generate key image");
+    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "生成密钥镜像失败");
 
     THROW_WALLET_EXCEPTION_IF(td.m_key_image_known && !td.m_key_image_partial && ki != td.m_key_image,
         error::wallet_internal_error, "key_image generated not matched with cached key image");
@@ -13640,7 +13640,7 @@ uint64_t wallet2::import_key_images(const std::vector<std::pair<crypto::key_imag
 
       cryptonote::transaction spent_tx;
       crypto::hash spnet_txid_parsed;
-      THROW_WALLET_EXCEPTION_IF(!get_pruned_tx(e, spent_tx, spnet_txid_parsed), error::wallet_internal_error, "Failed to get tx from daemon");
+      THROW_WALLET_EXCEPTION_IF(!get_pruned_tx(e, spent_tx, spnet_txid_parsed), error::wallet_internal_error, "从守护进程获取交易失败");
       THROW_WALLET_EXCEPTION_IF(!(spnet_txid_parsed == *it), error::wallet_internal_error, "parsed txid mismatch");
       ++it;
 
@@ -13650,14 +13650,14 @@ uint64_t wallet2::import_key_images(const std::vector<std::pair<crypto::key_imag
       const crypto::public_key tx_pub_key = get_tx_pub_key_from_extra(spent_tx);
       crypto::key_derivation derivation;
       bool r = hwdev.generate_key_derivation(tx_pub_key, keys.m_view_secret_key, derivation);
-      THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to generate key derivation");
+      THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "生成密钥派生失败");
       const std::vector<crypto::public_key> additional_tx_pub_keys = get_additional_tx_pub_keys_from_extra(spent_tx);
       std::vector<crypto::key_derivation> additional_derivations;
       for (size_t i = 0; i < additional_tx_pub_keys.size(); ++i)
       {
         additional_derivations.push_back({});
         r = hwdev.generate_key_derivation(additional_tx_pub_keys[i], keys.m_view_secret_key, additional_derivations.back());
-        THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to generate key derivation");
+        THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "生成密钥派生失败");
       }
       size_t output_index = 0;
       bool miner_tx = spent_tx.is_coinbase();
@@ -13697,7 +13697,7 @@ uint64_t wallet2::import_key_images(const std::vector<std::pair<crypto::key_imag
           if (amount > 0)
           {
             THROW_WALLET_EXCEPTION_IF(amount != td.amount(), error::wallet_internal_error,
-                std::string("Inconsistent amount in tx input: got ") + print_money(amount) +
+                std::string("交易输入金额不一致，实际得到：") + print_money(amount) +
                 std::string(", expected ") + print_money(td.amount()));
           }
           amount = td.amount();
@@ -13988,7 +13988,7 @@ void wallet2::store_background_keys(const crypto::chacha_key &custom_background_
   if (m_nettype != MAINNET && !boost::filesystem::exists(background_address_file))
   {
     r = save_to_file(background_address_file, m_account.get_public_address_str(m_nettype), true);
-    if (!r) MERROR("String with address text not saved");
+    if (!r) MERROR("地址文本未保存");
   }
 
   MDEBUG("Background keys stored");
@@ -14401,7 +14401,7 @@ process:
     if (should_expand(td.m_subaddr_index))
       create_one_off_subaddress(td.m_subaddr_index);
     bool r = cryptonote::generate_key_image_helper(m_account.get_keys(), m_subaddresses, out_key, tx_pub_key, additional_tx_pub_keys, td.m_internal_output_index, in_ephemeral, td.m_key_image, m_account.get_device());
-    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to generate key image");
+    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "生成密钥镜像失败");
     if (should_expand(td.m_subaddr_index))
       expand_subaddresses(td.m_subaddr_index);
     td.m_key_image_known = true;
@@ -14505,7 +14505,7 @@ size_t wallet2::import_outputs(const std::tuple<uint64_t, uint64_t, std::vector<
     if (should_expand(td.m_subaddr_index))
       create_one_off_subaddress(td.m_subaddr_index);
     bool r = cryptonote::generate_key_image_helper(m_account.get_keys(), m_subaddresses, out_key, tx_pub_key, additional_tx_pub_keys, td.m_internal_output_index, in_ephemeral, td.m_key_image, m_account.get_device());
-    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to generate key image");
+    THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "生成密钥镜像失败");
     if (should_expand(td.m_subaddr_index))
       expand_subaddresses(td.m_subaddr_index);
     td.m_key_image_known = true;
@@ -14612,7 +14612,7 @@ crypto::public_key wallet2::get_multisig_signing_public_key(const crypto::secret
 {
   CHECK_AND_ASSERT_THROW_MES(m_multisig, "Wallet is not multisig");
   crypto::public_key pkey;
-  CHECK_AND_ASSERT_THROW_MES(crypto::secret_key_to_public_key(msk, pkey), "Failed to derive public key");
+  CHECK_AND_ASSERT_THROW_MES(crypto::secret_key_to_public_key(msk, pkey), "派生公钥失败");
   return pkey;
 }
 //----------------------------------------------------------------------------------------------------
@@ -14678,7 +14678,7 @@ rct::multisig_kLRki wallet2::get_multisig_kLRki(size_t n, const rct::key &k) con
 //----------------------------------------------------------------------------------------------------
 rct::multisig_kLRki wallet2::get_multisig_composite_kLRki(size_t n, const std::unordered_set<crypto::public_key> &ignore_set, std::unordered_set<rct::key> &used_L, std::unordered_set<rct::key> &new_used_L) const
 {
-  CHECK_AND_ASSERT_THROW_MES(n < m_transfers.size(), "Bad transfer index");
+  CHECK_AND_ASSERT_THROW_MES(n < m_transfers.size(), "交易索引错误");
 
   rct::multisig_kLRki kLRki = get_multisig_kLRki(n, rct::skGen());
 
@@ -14719,7 +14719,7 @@ crypto::key_image wallet2::get_multisig_composite_key_image(size_t n) const
     for (const auto &pki: info.m_partial_key_images)
       pkis.push_back(pki);
   bool r = multisig::generate_multisig_composite_key_image(get_account().get_keys(), m_subaddresses, td.get_public_key(), tx_key, additional_tx_keys, td.m_internal_output_index, pkis, ki);
-  THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to generate key image");
+  THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "生成密钥镜像失败");
   return ki;
 }
 //----------------------------------------------------------------------------------------------------
@@ -14832,7 +14832,7 @@ cryptonote::blobdata wallet2::export_multisig()
     {
       // we want to export the partial key image, not the full one, so we can't use td.m_key_image
       bool r = multisig::generate_multisig_key_image(get_account().get_keys(), m, td.get_public_key(), ki);
-      CHECK_AND_ASSERT_THROW_MES(r, "Failed to generate key image");
+      CHECK_AND_ASSERT_THROW_MES(r, "生成密钥镜像失败");
       info[n].m_partial_key_images.push_back(ki);
     }
 
