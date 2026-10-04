@@ -3689,7 +3689,7 @@ bool simple_wallet::set_variable(const std::vector<std::string> &args)
     CHECK_SIMPLE_VARIABLE("print-ring-members", set_print_ring_members, tr("0 or 1"));
     CHECK_SIMPLE_VARIABLE("store-tx-info", set_store_tx_info, tr("0 or 1"));
     CHECK_SIMPLE_VARIABLE("auto-refresh", set_auto_refresh, tr("0 or 1"));
-    CHECK_SIMPLE_VARIABLE("refresh-type", set_refresh_type, tr("full (slowest, no assumptions); optimize-coinbase (fast, assumes the whole coinbase is paid to a single address); no-coinbase (fastest, assumes we receive no coinbase transaction), default (same as optimize-coinbase)"));
+    CHECK_SIMPLE_VARIABLE("refresh-type", set_refresh_type, tr("full（最慢，不作假设）；optimize-coinbase（较快，假设全部 coinbase 支付给单个地址）；no-coinbase（最快，假设不会收到 coinbase 交易）；default（与 optimize-coinbase 相同）"));
     CHECK_SIMPLE_VARIABLE("priority", set_default_priority, tr("0, 1, 2, 3, or 4, or one of ") << join_priority_strings(", "));
     CHECK_SIMPLE_VARIABLE("ask-password", set_ask_password, tr("0|1|2 (or never|action|decrypt)"));
     CHECK_SIMPLE_VARIABLE("unit", set_unit, tr("monero, millinero, micronero, nanonero, piconero"));
@@ -3710,10 +3710,10 @@ bool simple_wallet::set_variable(const std::vector<std::string> &args)
     CHECK_SIMPLE_VARIABLE("ignore-outputs-above", set_ignore_outputs_above, tr("amount"));
     CHECK_SIMPLE_VARIABLE("ignore-outputs-below", set_ignore_outputs_below, tr("amount"));
     CHECK_SIMPLE_VARIABLE("track-uses", set_track_uses, tr("0 or 1"));
-    CHECK_SIMPLE_VARIABLE("background-sync", setup_background_sync, tr("off (default); reuse-wallet-password (reuse the wallet password to encrypt the background cache); custom-background-password (use a custom background password to encrypt the background cache)"));
+    CHECK_SIMPLE_VARIABLE("background-sync", setup_background_sync, tr("off（默认）；reuse-wallet-password（使用钱包密码加密后台缓存）；custom-background-password（使用自定义后台密码加密后台缓存）"));
     CHECK_SIMPLE_VARIABLE("show-wallet-name-when-locked", set_show_wallet_name_when_locked, tr("1 or 0"));
-    CHECK_SIMPLE_VARIABLE("inactivity-lock-timeout", set_inactivity_lock_timeout, tr("unsigned integer (seconds, 0 to disable)"));
-    CHECK_SIMPLE_VARIABLE("setup-background-mining", set_setup_background_mining, tr("1/yes or 0/no"));
+    CHECK_SIMPLE_VARIABLE("inactivity-lock-timeout", set_inactivity_lock_timeout, tr("无符号整数（秒，0 表示禁用）"));
+    CHECK_SIMPLE_VARIABLE("setup-background-mining", set_setup_background_mining, tr("1/yes 或 0/no"));
     CHECK_SIMPLE_VARIABLE("device-name", set_device_name, tr("<device_name[:device_spec]>"));
     CHECK_SIMPLE_VARIABLE("export-format", set_export_format, tr("\"binary\" or \"ascii\""));
     CHECK_SIMPLE_VARIABLE("load-deprecated-formats", set_load_deprecated_formats, tr("0 or 1"));
@@ -4433,7 +4433,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
         {
           is_override = true;
           message_writer(console_color_red, true) <<
-            boost::format(tr("--restore-height or --restore-date parameter value overrides restore height %u from Polyseed birthday")) % polyseed_restore_height;
+            boost::format(tr("--restore-height 或 --restore-date 参数会覆盖 Polyseed 生日计算得到的恢复高度 %u。")) % polyseed_restore_height;
           message_writer(console_color_red, true) <<
             tr("使用 Polyseed 时无需指定恢复高度，通常也不需要指定任何恢复高度");
         }
@@ -4546,7 +4546,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
     m_wallet_file = resolve_wallet_path(m_wallet_file, wallet_dir);
     if (!m_subaddress_lookahead.empty())
     {
-      fail_msg_writer() << tr("can't specify --subaddress-lookahead and --wallet-file at the same time");
+      fail_msg_writer() << tr("不能同时指定 --subaddress-lookahead 和 --wallet-file");
       return false;
     }
     auto r = open_wallet(vm);
@@ -4567,7 +4567,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
     if (m_wallet->check_connection(NULL, &ssl) && !ssl)
       message_writer(console_color_red, true) << boost::format(tr("使用自己的节点但不启用 SSL，会使 RPC 流量暴露给监控"));
     message_writer(console_color_red, true) << boost::format(tr("强烈建议使用自己的守护进程连接 Monero 网络"));
-    message_writer(console_color_red, true) << boost::format(tr("If you or someone you trust are operating this daemon, you can use --trusted-daemon"));
+    message_writer(console_color_red, true) << boost::format(tr("如果此守护进程由您或您信任的人运行，可以使用 --trusted-daemon。"));
   }
 
   if (m_wallet->get_ring_database().empty())
@@ -4665,7 +4665,7 @@ bool simple_wallet::try_connect_to_daemon(bool silent, uint32_t* version)
   if (!m_wallet->is_mismatched_daemon_version_allowed() && ((*version >> 16) != CORE_RPC_VERSION_MAJOR))
   {
     if (!silent)
-      fail_msg_writer() << boost::format(tr("Daemon uses a different RPC major version (%u) than the wallet (%u): %s. Either update one of them, or use --allow-mismatched-daemon-version.")) % (*version>>16) % CORE_RPC_VERSION_MAJOR % m_wallet->get_daemon_address();
+      fail_msg_writer() << boost::format(tr("守护进程使用的 RPC 主版本（%u）与钱包（%u）不同：%s。请更新其中一个版本，或使用 --allow-mismatched-daemon-version。")) % (*version>>16) % CORE_RPC_VERSION_MAJOR % m_wallet->get_daemon_address();
     return false;
   }
   return true;
