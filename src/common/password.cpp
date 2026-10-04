@@ -185,12 +185,12 @@ namespace
         return false;
       if (verify)
       {
-        std::cout << "Confirm password: " << std::flush;
+        std::cout << "确认密码：" << std::flush;
         if (!read_from_tty(pass2, hide_input))
           return false;
         if(pass1!=pass2)
         {
-          std::cout << "Passwords do not match! Please try again." << std::endl;
+          std::cout << "两次密码不一致！请重试。" << std::endl;
           pass1.clear();
           pass2.clear();
         }
