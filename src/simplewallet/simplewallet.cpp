@@ -3437,7 +3437,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("mms init",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_INIT),
-                           tr("Initialize and configure the MMS for M/N = number of required signers/number of authorized signers multisig"));
+                           tr("初始化并配置 M/N 多重签名 MMS，其中 M 为所需签名者数量，N 为授权签名者数量。"));
   m_cmd_binder.set_handler("mms info",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_INFO),
@@ -3445,7 +3445,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("mms signer",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_SIGNER),
-                           tr("Set or modify authorized signer info (single-word label, transport address, Monero address), or list all signers"));
+                           tr("设置或修改授权签名者信息（单词标签、传输地址、Monero 地址），或列出所有签名者。"));
   m_cmd_binder.set_handler("mms list",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_LIST),
@@ -3458,11 +3458,11 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("mms sync",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_SYNC),
-                           tr("Force generation of multisig sync info regardless of wallet state, to recover from special situations like \"stale data\" errors"));
+                           tr("无论钱包状态如何都强制生成多重签名同步信息，用于从 \"stale data\" 等特殊错误中恢复。"));
   m_cmd_binder.set_handler("mms transfer",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_TRANSFER),
-                           tr("Initiate transfer with MMS support; arguments identical to normal 'transfer' command arguments, for info see there"));
+                           tr("发起支持 MMS 的转账；参数与普通 transfer 命令相同，具体说明请参见 transfer。"));
   m_cmd_binder.set_handler("mms delete",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_DELETE),
@@ -3478,7 +3478,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("mms export",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_EXPORT),
-                           tr("Write the content of a message to a file \"mms_message_content\""));
+                           tr("将消息内容写入文件 \"mms_message_content\"。"));
   m_cmd_binder.set_handler("mms note",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_NOTE),
