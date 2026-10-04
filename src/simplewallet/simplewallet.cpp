@@ -10594,7 +10594,7 @@ bool simple_wallet::user_confirms_auto_config()
 {
   message_writer(console_color_red, true) << tr("警告：使用 MMS 自动配置机制并非无需信任");
   message_writer() << tr("恶意的自动配置管理者可能会发送其自己的钱包信息，而不是其他签名者的信息");
-  message_writer() << tr("If in doubt do not use auto-config or at least compare configs using the \"mms config_checksum\" command");
+  message_writer() << tr("如有疑问，请不要使用自动配置；至少应使用 \"mms config_checksum\" 命令比较配置");
   return user_confirms("Accept the risks and continue?");
 }
 
@@ -10678,7 +10678,7 @@ bool simple_wallet::choose_mms_processing(const std::vector<mms::processing_data
 void simple_wallet::list_mms_messages(const std::vector<mms::message> &messages)
 {
   message_writer() << boost::format("%4s %-4s %-30s %-21s %7s %3s %-15s %-40s") % tr("Id") % tr("I/O") % tr("授权签名者")
-          % tr("消息类型") % tr("Height") % tr("R") % tr("消息状态") % tr("自");
+          % tr("消息类型") % tr("高度") % tr("R") % tr("消息状态") % tr("自");
   mms::message_store& ms = m_wallet->get_message_store();
   uint64_t now = (uint64_t)time(NULL);
   for (size_t i = 0; i < messages.size(); ++i)
@@ -10760,7 +10760,7 @@ void simple_wallet::show_message(const mms::message &m)
   message_writer() << tr("消息 ") << m.id;
   message_writer() << tr("收/发：") << ms.message_direction_to_string(m.direction);
   message_writer() << tr("类型：") << ms.message_type_to_string(m.type);
-  message_writer() << tr("状态：") << boost::format(tr("%s since %s, %s ago")) %
+  message_writer() << tr("状态：") << boost::format(tr("%s，自 %s 起，%s 前")) %
           ms.message_state_to_string(m.state) % tools::get_human_readable_timestamp(m.modified) % tools::get_human_readable_timespan(std::chrono::seconds(now - m.modified));
   if (m.sent == 0)
   {
@@ -10768,7 +10768,7 @@ void simple_wallet::show_message(const mms::message &m)
   }
   else
   {
-    message_writer() << boost::format(tr("Sent: %s, %s ago")) %
+    message_writer() << boost::format(tr("已发送：%s，%s 前")) %
             tools::get_human_readable_timestamp(m.sent) % tools::get_human_readable_timespan(std::chrono::seconds(now - m.sent));
   }
   message_writer() << tr("授权签名者：") << ms.signer_to_string(signer, 100);
@@ -10842,7 +10842,7 @@ void simple_wallet::mms_init(const std::vector<std::string> &args)
 {
   if (args.size() != 3)
   {
-    fail_msg_writer() << tr("usage: mms init <required_signers>/<authorized_signers> <own_label> <own_transport_address>");
+    fail_msg_writer() << tr("用法：mms init <required_signers>/<authorized_signers> <own_label> <own_transport_address>");
     return;
   }
   mms::message_store& ms = m_wallet->get_message_store();
@@ -10946,7 +10946,7 @@ void simple_wallet::mms_list(const std::vector<std::string> &args)
   mms::message_store& ms = m_wallet->get_message_store();
   if (args.size() != 0)
   {
-    fail_msg_writer() << tr("Usage: mms list");
+    fail_msg_writer() << tr("用法：mms list");
     return;
   }
   LOCK_IDLE_SCOPE();
@@ -10959,7 +10959,7 @@ void simple_wallet::mms_next(const std::vector<std::string> &args)
   mms::message_store& ms = m_wallet->get_message_store();
   if ((args.size() > 1) || ((args.size() == 1) && (args[0] != "sync")))
   {
-    fail_msg_writer() << tr("Usage: mms next [sync]");
+    fail_msg_writer() << tr("用法：mms next [sync]");
     return;
   }
   bool avail = false;
@@ -11148,7 +11148,7 @@ void simple_wallet::mms_sync(const std::vector<std::string> &args)
 {
   if (args.size() != 0)
   {
-    fail_msg_writer() << tr("Usage: mms sync");
+    fail_msg_writer() << tr("用法：mms sync");
     return;
   }
   // Force the start of a new sync round, for exceptional cases where something went wrong
@@ -11172,7 +11172,7 @@ void simple_wallet::mms_delete(const std::vector<std::string> &args)
 {
   if (args.size() != 1)
   {
-    fail_msg_writer() << tr("Usage: mms delete (<message_id> | all)");
+    fail_msg_writer() << tr("用法：mms delete (<message_id> | all)");
     return;
   }
   LOCK_IDLE_SCOPE();
@@ -11205,7 +11205,7 @@ void simple_wallet::mms_send(const std::vector<std::string> &args)
   }
   else if (args.size() != 1)
   {
-    fail_msg_writer() << tr("Usage: mms send [<message_id>]");
+    fail_msg_writer() << tr("用法：mms send [<message_id>]");
     return;
   }
   LOCK_IDLE_SCOPE();
@@ -11222,7 +11222,7 @@ void simple_wallet::mms_receive(const std::vector<std::string> &args)
 {
   if (args.size() != 0)
   {
-    fail_msg_writer() << tr("Usage: mms receive");
+    fail_msg_writer() << tr("用法：mms receive");
     return;
   }
   std::vector<mms::message> new_messages;
@@ -11239,7 +11239,7 @@ void simple_wallet::mms_export(const std::vector<std::string> &args)
 {
   if (args.size() != 1)
   {
-    fail_msg_writer() << tr("Usage: mms export <message_id>");
+    fail_msg_writer() << tr("用法：mms export <message_id>");
     return;
   }
   LOCK_IDLE_SCOPE();
@@ -11278,7 +11278,7 @@ void simple_wallet::mms_note(const std::vector<std::string> &args)
   }
   if (args.size() < 2)
   {
-    fail_msg_writer() << tr("Usage: mms note [<label> <text>]");
+    fail_msg_writer() << tr("用法：mms note [<label> <text>]");
     return;
   }
   uint32_t signer_index;
@@ -11307,7 +11307,7 @@ void simple_wallet::mms_show(const std::vector<std::string> &args)
 {
   if (args.size() != 1)
   {
-    fail_msg_writer() << tr("Usage: mms show <message_id>");
+    fail_msg_writer() << tr("用法：mms show <message_id>");
     return;
   }
   LOCK_IDLE_SCOPE();
@@ -11325,7 +11325,7 @@ void simple_wallet::mms_set(const std::vector<std::string> &args)
   bool query = args.size() == 1;
   if (!set && !query)
   {
-    fail_msg_writer() << tr("Usage: mms set <option_name> [<option_value>]");
+    fail_msg_writer() << tr("用法：mms set <option_name> [<option_value>]");
     return;
   }
   mms::message_store& ms = m_wallet->get_message_store();
@@ -11360,7 +11360,7 @@ void simple_wallet::mms_help(const std::vector<std::string> &args)
 {
   if (args.size() > 1)
   {
-    fail_msg_writer() << tr("Usage: help mms [<subcommand>]");
+    fail_msg_writer() << tr("用法：help mms [<subcommand>]");
     return;
   }
   std::vector<std::string> help_args;
@@ -11376,7 +11376,7 @@ void simple_wallet::mms_send_signer_config(const std::vector<std::string> &args)
 {
   if (args.size() != 0)
   {
-    fail_msg_writer() << tr("Usage: mms send_signer_config");
+    fail_msg_writer() << tr("用法：mms send_signer_config");
     return;
   }
   mms::message_store& ms = m_wallet->get_message_store();
@@ -11397,7 +11397,7 @@ void simple_wallet::mms_start_auto_config(const std::vector<std::string> &args)
   size_t args_size = args.size();
   if ((args_size != 0) && (args_size != other_signers))
   {
-    fail_msg_writer() << tr("Usage: mms start_auto_config [<label> <label> ...]");
+    fail_msg_writer() << tr("用法：mms start_auto_config [<label> <label> ...]");
     return;
   }
   if ((args_size == 0) && !ms.signer_labels_complete())
@@ -11432,7 +11432,7 @@ void simple_wallet::mms_config_checksum(const std::vector<std::string> &args)
 {
   if (args.size() != 0)
   {
-    fail_msg_writer() << tr("Usage: mms config_checksum");
+    fail_msg_writer() << tr("用法：mms config_checksum");
     return;
   }
   mms::message_store& ms = m_wallet->get_message_store();
@@ -11444,7 +11444,7 @@ void simple_wallet::mms_stop_auto_config(const std::vector<std::string> &args)
 {
   if (args.size() != 0)
   {
-    fail_msg_writer() << tr("Usage: mms stop_auto_config");
+    fail_msg_writer() << tr("用法：mms stop_auto_config");
     return;
   }
   if (!user_confirms(tr("删除所有自动配置令牌并停止自动配置吗？")))
@@ -11460,7 +11460,7 @@ void simple_wallet::mms_auto_config(const std::vector<std::string> &args)
 {
   if (args.size() != 1)
   {
-    fail_msg_writer() << tr("Usage: mms auto_config <auto_config_token>");
+    fail_msg_writer() << tr("用法：mms auto_config <auto_config_token>");
     return;
   }
   mms::message_store& ms = m_wallet->get_message_store();
@@ -11520,7 +11520,7 @@ bool simple_wallet::mms(const std::vector<std::string> &args)
     }
     if (!ms.get_active())
     {
-      fail_msg_writer() << tr("MMS 未启用。 Activate using the \"mms init\" command");
+      fail_msg_writer() << tr("MMS 未启用。请使用 \"mms init\" 命令启用");
       return true;
     }
     else if (sub_command == "info")
