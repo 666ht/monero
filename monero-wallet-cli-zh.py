@@ -3,22 +3,34 @@
 """
 Termux wrapper for monero-wallet-cli.
 
-- Keeps the original monero-wallet-cli binary untouched.
-- Uses a real PTY, so readline/password/input interaction still works.
-- Translates common English console prompts/messages to Simplified Chinese.
-- Unknown text is passed through unchanged.
+The original ./monero-wallet-cli is left untouched. This wrapper:
+  * starts it inside a real PTY;
+  * keeps interactive input/password/readline behavior;
+  * translates common English console text to Simplified Chinese;
+  * passes unknown text and wallet data through unchanged.
+
+Usage:
+  chmod +x ./monero-wallet-cli ./monero-wallet-cli-zh.py
+  ./monero-wallet-cli-zh.py [monero-wallet-cli arguments...]
 """
 
 import os
 import pty
 import re
+import selectors
+import signal
+import struct
+import subprocess
 import sys
+import termios
+import fcntl
+import tty
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 BINARY = os.path.join(SCRIPT_DIR, "monero-wallet-cli")
 
-# Longest/specific phrases first. These are output-only replacements; command
-# names, addresses, hashes, amounts and other wallet data are not modified.
+# Specific phrases first. These are output-only replacements; command names,
+# addresses, hashes, amounts and other wallet data are not changed.
 TRANSLATIONS = [
     ("Specify wallet file name", "请指定钱包文件名"),
     ("Wallet file name", "钱包文件名"),
@@ -28,9 +40,7 @@ TRANSLATIONS = [
     ("Please confirm password", "请确认密码"),
     ("Confirm password", "确认密码"),
     ("Password confirmation", "密码确认"),
-    ("Password", "密码"),
     ("Wallet password", "钱包密码"),
-    ("New password", "新密码"),
     ("Wallet name", "钱包名称"),
     ("Generate new wallet", "生成新钱包"),
     ("Restore wallet", "恢复钱包"),
@@ -53,11 +63,11 @@ TRANSLATIONS = [
     ("Block height", "区块高度"),
     ("Remaining", "剩余"),
     ("remaining", "剩余"),
+    ("Sync complete", "同步完成"),
+    ("Syncing wallet", "正在同步钱包"),
     ("Syncing", "正在同步"),
     ("Synchronizing", "正在同步"),
     ("Synchronization", "同步"),
-    ("Sync complete", "同步完成"),
-    ("Syncing wallet", "正在同步钱包"),
     ("Scanning", "正在扫描"),
     ("Scan complete", "扫描完成"),
     ("Rescanning", "正在重新扫描"),
@@ -69,20 +79,12 @@ TRANSLATIONS = [
     ("Selected account", "选中账户"),
     ("Account", "账户"),
     ("Subaddress", "子地址"),
-    ("Address", "地址"),
     ("Integrated address", "集成地址"),
     ("Payment ID", "支付 ID"),
-    ("Transaction", "交易"),
-    ("Transactions", "交易"),
     ("Transaction ID", "交易 ID"),
     ("Transaction hash", "交易哈希"),
     ("Transaction key", "交易密钥"),
     ("Destination address", "目标地址"),
-    ("Destination", "目标"),
-    ("Amount", "金额"),
-    ("Fee", "手续费"),
-    ("Priority", "优先级"),
-    ("Payment", "付款"),
     ("Incoming transfers", "收款记录"),
     ("Outgoing transfers", "转账记录"),
     ("Pending transactions", "待处理交易"),
@@ -91,13 +93,20 @@ TRANSLATIONS = [
     ("Unconfirmed", "未确认"),
     ("Locked", "已锁定"),
     ("Unlocked", "已解锁"),
-    ("Transfer", "转账"),
-    ("Transfer failed", "转账失败"),
-    ("Transfer succeeded", "转账成功"),
     ("Transaction successfully sent", "交易已成功发送"),
     ("Transaction created successfully", "交易创建成功"),
     ("Transaction was relayed", "交易已广播"),
     ("Transaction was not relayed", "交易未广播"),
+    ("Transfer failed", "转账失败"),
+    ("Transfer succeeded", "转账成功"),
+    ("Transaction", "交易"),
+    ("Transactions", "交易"),
+    ("Transfer", "转账"),
+    ("Destination", "目标"),
+    ("Amount", "金额"),
+    ("Fee", "手续费"),
+    ("Priority", "优先级"),
+    ("Payment", "付款"),
     ("Command not found", "未找到命令"),
     ("Unknown command", "未知命令"),
     ("Invalid command", "无效命令"),
@@ -118,7 +127,6 @@ TRANSLATIONS = [
     ("Wallet opened", "钱包已打开"),
     ("Wallet closed", "钱包已关闭"),
     ("Wallet saved", "钱包已保存"),
-    ("Wallet successfully", "钱包操作成功"),
     ("Error:", "错误："),
     ("ERROR:", "错误："),
     ("Warning:", "警告："),
@@ -133,20 +141,19 @@ TRANSLATIONS = [
     ("not found", "未找到"),
     ("not available", "不可用"),
     ("not connected", "未连接"),
-    ("connected", "已连接"),
     ("Connection refused", "连接被拒绝"),
     ("Connection timed out", "连接超时"),
     ("Disconnected from daemon", "已与守护进程断开连接"),
-    ("Daemon", "守护进程"),
-    ("daemon", "守护进程"),
-    ("Starting daemon", "正在启动守护进程"),
+    ("The following daemon is not trusted", "以下守护进程不受信任"),
     ("Daemon is busy", "守护进程正忙"),
     ("untrusted daemon", "不受信任的守护进程"),
     ("trusted daemon", "受信任的守护进程"),
-    ("The following daemon is not trusted", "以下守护进程不受信任"),
-    ("Mining", "挖矿"),
+    ("Starting daemon", "正在启动守护进程"),
+    ("Daemon", "守护进程"),
+    ("daemon", "守护进程"),
     ("Mining started", "挖矿已开始"),
     ("Mining stopped", "挖矿已停止"),
+    ("Mining", "挖矿"),
     ("Multisig", "多重签名"),
     ("multisig", "多重签名"),
     ("Freeze", "冻结"),
@@ -157,57 +164,45 @@ TRANSLATIONS = [
     ("Import", "导入"),
     ("Description", "描述"),
     ("Note", "备注"),
-    ("Save", "保存"),
-    ("Delete", "删除"),
-    ("Yes", "是"),
-    ("No", "否"),
-    ("Success", "成功"),
-    ("failed", "失败"),
-    ("Enter", "请输入"),
-    ("Please", "请"),
-    ("Done", "完成"),
     ("Press Enter to continue", "按回车键继续"),
     ("Press enter to continue", "按回车键继续"),
+    ("Success", "成功"),
+    ("failed", "失败"),
 ]
 
-# Replace longer phrases before shorter terms.
 TRANSLATIONS.sort(key=lambda x: len(x[0]), reverse=True)
-_translation_re = re.compile(
-    "|".join(re.escape(src) for src, _ in TRANSLATIONS)
-)
+_translation_re = re.compile("|".join(re.escape(src) for src, _ in TRANSLATIONS))
 _translation_map = dict(TRANSLATIONS)
 
 def translate(text: str) -> str:
     return _translation_re.sub(lambda m: _translation_map[m.group(0)], text)
 
+
 class StreamTranslator:
-    def __init__(self) -> None:
+    def __init__(self):
         self.pending = ""
 
     def feed(self, data: bytes) -> bytes:
-        # Console output is UTF-8 on Termux. Keep decoding loss-tolerant so a
-        # malformed byte from an external component never breaks the wallet.
         text = data.decode("utf-8", errors="replace")
         self.pending += text
-
         out = []
+
+        # Flush complete console lines.
         while True:
-            positions = [p for p in (self.pending.find("\n"),
-                                     self.pending.find("\r")) if p >= 0]
+            positions = [p for p in (self.pending.find("\n"), self.pending.find("\r")) if p >= 0]
             if not positions:
                 break
             end = min(positions) + 1
             out.append(translate(self.pending[:end]))
             self.pending = self.pending[end:]
 
-        # Interactive prompts often have no newline. Flush a prompt when it
-        # clearly ends in ": " or "? ", while retaining long partial fragments.
-        if self.pending.endswith((": ", "? "))):
+        # Interactive prompts often do not end with a newline.
+        if self.pending.endswith((": ", "? ")):
             out.append(translate(self.pending))
             self.pending = ""
-        elif len(self.pending) > 4096:
-            out.append(translate(self.pending[:-512]))
-            self.pending = self.pending[-512:]
+        elif len(self.pending) > 8192:
+            out.append(translate(self.pending[:-1024]))
+            self.pending = self.pending[-1024:]
 
         return "".join(out).encode("utf-8", errors="replace")
 
@@ -217,6 +212,15 @@ class StreamTranslator:
         out = translate(self.pending)
         self.pending = ""
         return out.encode("utf-8", errors="replace")
+
+
+def copy_window_size(src_fd: int, dst_fd: int) -> None:
+    try:
+        size = fcntl.ioctl(src_fd, termios.TIOCGWINSZ, b"\0" * 8)
+        fcntl.ioctl(dst_fd, termios.TIOCSWINSZ, size)
+    except (OSError, AttributeError):
+        pass
+
 
 def main() -> int:
     if not os.path.isfile(BINARY):
@@ -229,32 +233,77 @@ def main() -> int:
         print("请运行：chmod +x ./monero-wallet-cli", file=sys.stderr)
         return 1
 
+    master, slave = pty.openpty()
+    copy_window_size(sys.stdin.fileno(), slave)
+
+    child = subprocess.Popen(
+        [BINARY, *sys.argv[1:]],
+        stdin=slave,
+        stdout=slave,
+        stderr=slave,
+        close_fds=True,
+        start_new_session=True,
+    )
+    os.close(slave)
+
+    def on_winch(_signum, _frame):
+        copy_window_size(sys.stdin.fileno(), master)
+
+    old_attrs = None
     translator = StreamTranslator()
+    selector = selectors.DefaultSelector()
+    master_open = True
 
-    def master_read(fd: int) -> bytes:
+    try:
+        old_attrs = termios.tcgetattr(sys.stdin.fileno())
+        tty.setraw(sys.stdin.fileno())
+
+        signal.signal(signal.SIGWINCH, on_winch)
+        selector.register(master, selectors.EVENT_READ, "pty")
+        selector.register(sys.stdin.fileno(), selectors.EVENT_READ, "stdin")
+
+        while master_open:
+            for key, _ in selector.select(timeout=0.1):
+                if key.data == "pty":
+                    try:
+                        data = os.read(master, 16384)
+                    except OSError:
+                        data = b""
+                    if not data:
+                        master_open = False
+                        selector.unregister(master)
+                        break
+                    converted = translator.feed(data)
+                    if converted:
+                        os.write(sys.stdout.fileno(), converted)
+
+                else:
+                    try:
+                        data = os.read(sys.stdin.fileno(), 4096)
+                    except OSError:
+                        data = b""
+                    if data:
+                        os.write(master, data)
+                    else:
+                        selector.unregister(sys.stdin.fileno())
+
+            if child.poll() is not None and not master_open:
+                break
+
+        tail = translator.flush()
+        if tail:
+            os.write(sys.stdout.fileno(), tail)
+    finally:
+        selector.close()
         try:
-            data = os.read(fd, 4096)
+            os.close(master)
         except OSError:
-            return b""
-        if not data:
-            return b""
-        converted = translator.feed(data)
-        if converted:
-            os.write(sys.stdout.fileno(), converted)
-        # Return empty because we already wrote translated output ourselves.
-        return b""
+            pass
+        if old_attrs is not None:
+            termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, old_attrs)
 
-    status = pty.spawn([BINARY, *sys.argv[1:]], master_read=master_read)
+    return child.returncode if child.returncode is not None else 0
 
-    tail = translator.flush()
-    if tail:
-        os.write(sys.stdout.fileno(), tail)
-
-    if os.WIFEXITED(status):
-        return os.WEXITSTATUS(status)
-    if os.WIFSIGNALED(status):
-        return 128 + os.WTERMSIG(status)
-    return 1
 
 if __name__ == "__main__":
     raise SystemExit(main())
