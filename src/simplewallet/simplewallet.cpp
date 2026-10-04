@@ -3157,7 +3157,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("address",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::print_address, _1),
                            tr(USAGE_ADDRESS),
-                           tr("If no arguments are specified or <index> is specified, the wallet shows the default or specified address. If \"all\" is specified, the wallet shows all the existing addresses in the currently selected account. If \"new \" is specified, the wallet creates a new address with the provided label text (which can be empty). If \"mnew\" is specified, the wallet creates as many new addresses as specified by the argument; the default label is set for the new addresses. If \"label\" is specified, the wallet sets the label of the address specified by <index> to the provided label text. If \"one-off\" is specified, the address for the specified index is generated and displayed, and remembered by the wallet"));
+                           tr("未指定参数或指定 <index> 时，钱包显示默认地址或指定地址。指定 \"all\" 时，显示当前账户的所有地址。指定 \"new\" 时，创建带指定标签的新地址（标签可以为空）。指定 \"mnew\" 时，根据参数创建指定数量的新地址，并使用默认标签。指定 \"label\" 时，为 <index> 指定的地址设置标签。指定 \"one-off\" 时，生成并显示指定索引的一次性地址，并由钱包记住该地址。"));
   m_cmd_binder.set_handler("integrated_address",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::print_integrated_address, _1),
                            tr(USAGE_INTEGRATED_ADDRESS),
