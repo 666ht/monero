@@ -1086,12 +1086,12 @@ bool simple_wallet::print_fee_info(const std::vector<std::string> &args/* = std:
   }
   catch (const std::exception &e)
   {
-    fail_msg_writer() << tr("错误：failed to estimate backlog array size: ") << e.what();
+    fail_msg_writer() << tr("错误：估算交易积压数组大小失败：") << e.what();
     return true;
   }
   if (blocks.size() != 4)
   {
-    fail_msg_writer() << tr("错误：bad estimated backlog array size");
+    fail_msg_writer() << tr("错误：估算的交易积压数组大小无效");
     return true;
   }
 
@@ -1677,7 +1677,7 @@ bool simple_wallet::submit_multisig_main(const std::vector<std::string> &args, b
     }
     if (txs.m_signers.size() < ms_status.threshold)
     {
-      fail_msg_writer() << (boost::format(tr("多重签名 transaction signed by only %u signers, needs %u more signatures"))
+      fail_msg_writer() << (boost::format(tr("多重签名交易目前仅由 %u 个签名者签名，还需要 %u 个签名"))
           % txs.m_signers.size() % (ms_status.threshold - txs.m_signers.size())).str();
       return false;
     }
@@ -1742,7 +1742,7 @@ bool simple_wallet::export_raw_multisig(const std::vector<std::string> &args)
     }
     if (txs.m_signers.size() < ms_status.threshold)
     {
-      fail_msg_writer() << (boost::format(tr("多重签名 transaction signed by only %u signers, needs %u more signatures"))
+      fail_msg_writer() << (boost::format(tr("多重签名交易目前仅由 %u 个签名者签名，还需要 %u 个签名"))
           % txs.m_signers.size() % (ms_status.threshold - txs.m_signers.size())).str();
       return true;
     }
@@ -2027,7 +2027,7 @@ bool simple_wallet::unset_ring(const std::vector<std::string> &args)
   {
     if (!epee::string_tools::hex_to_pod(args[i], key_images[i]))
     {
-      fail_msg_writer() << tr("无效的密钥镜像 or txid");
+      fail_msg_writer() << tr("无效的密钥镜像或交易 ID");
       return true;
     }
   }
@@ -2957,25 +2957,25 @@ bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<st
     message_writer() << "";
     message_writer() << tr("重要命令：");
     message_writer() << "";
-    message_writer() << tr("\"welcome\" - Show welcome message.");
-    message_writer() << tr("\"help all\" - Show the list of all available commands.");
-    message_writer() << tr("\"help <command>\" - Show a command's documentation.");
-    message_writer() << tr("\"apropos <keyword>\" - Show commands related to a keyword.");
+    message_writer() << tr("\"welcome\" - 显示欢迎信息。");
+    message_writer() << tr("\"help all\" - 显示所有可用命令列表。");
+    message_writer() << tr("\"help <command>\" - 显示指定命令的文档。");
+    message_writer() << tr("\"apropos <keyword>\" - 显示与关键词相关的命令。");
     message_writer() << "";
-    message_writer() << tr("\"wallet_info\" - Show wallet main address and other info.");
-    message_writer() << tr("\"balance\" - Show balance.");
-    message_writer() << tr("\"address all\" - Show all addresses.");
-    message_writer() << tr("\"address new\" - Create new subaddress.");
-    message_writer() << tr("\"transfer <address> <amount>\" - Send XMR to an address.");
-    message_writer() << tr("\"show_transfers [in|out|pending|failed|pool]\" - Show transactions.");
-    message_writer() << tr("\"sweep_all <address>\" - Send whole balance to another wallet.");
+    message_writer() << tr("\"wallet_info\" - 显示钱包主地址和其他信息。");
+    message_writer() << tr("\"balance\" - 显示余额。");
+    message_writer() << tr("\"address all\" - 显示所有地址。");
+    message_writer() << tr("\"address new\" - 创建新的子地址。");
+    message_writer() << tr("\"transfer <address> <amount>\" - 向指定地址发送 XMR。");
+    message_writer() << tr("\"show_transfers [in|out|pending|failed|pool]\" - 显示交易。");
+    message_writer() << tr("\"sweep_all <address>\" - 将全部余额发送到另一个钱包。");
     message_writer() << tr("“seed”——显示可用于恢复此钱包的 25 个秘密助记词。");
-    message_writer() << tr("\"refresh\" - Synchronize wallet with the Monero network.");
-    message_writer() << tr("\"status\" - Check current status of wallet.");
-    message_writer() << tr("\"version\" - Check software version.");
-    message_writer() << tr("\"exit\" - Exit wallet.");
+    message_writer() << tr("\"refresh\" - 将钱包与 Monero 网络同步。");
+    message_writer() << tr("\"status\" - 查看钱包当前状态。");
+    message_writer() << tr("\"version\" - 查看软件版本。");
+    message_writer() << tr("\"exit\" - 退出钱包。");
     message_writer() << "";
-    message_writer() << tr("\"donate <amount>\" - Donate XMR to the general fund.");
+    message_writer() << tr("\"donate <amount>\" - 向公共基金捐赠 XMR。");
     message_writer() << "";
   }
   else if ((args.size() == 1) && (args.front() == "all"))
@@ -3110,24 +3110,24 @@ simple_wallet::simple_wallet()
                            tr("显示区块链高度。"));
   m_cmd_binder.set_handler("transfer", boost::bind(&simple_wallet::on_command, this, &simple_wallet::transfer, _1),
                            tr(USAGE_TRANSFER),
-                           tr("Transfer <address> <amount>. If the parameter \"index=<N1>[,<N2>,...]\" is specified, the wallet uses outputs received by addresses of those indices. If omitted, the wallet randomly chooses address indices to be used. In any case, it tries its best not to combine outputs across multiple addresses. <priority> is the priority of the transaction. The higher the priority, the higher the transaction fee. Valid values in priority order (from lowest to highest) are: unimportant, normal, elevated, priority. If omitted, the default value (see the command \"set priority\") is used. <ring_size> is the number of inputs to include for untraceability. Multiple payments can be made at once by adding URI_2 or <address_2> <amount_2> etcetera (before the payment ID, if it's included). The \"subtractfeefrom=\" list allows you to choose which destinations to fund the tx fee from instead of the change output. The fee will be split across the chosen destinations proportionally equally. For example, to make 3 transfers where the fee is taken from the first and third destinations, one could do: \"transfer <addr1> 3 <addr2> 0.5 <addr3> 1 subtractfeefrom=0,2\". Let's say the tx fee is 0.1. The balance would drop by exactly 4.5 XMR including fees, and addr1 & addr3 would receive 2.925 & 0.975 XMR, respectively. Use \"subtractfeefrom=all\" to spread the fee across all destinations."));
+                           tr("transfer <address> <amount>。指定 \"index=<N1>[,<N2>,...]\" 参数时，钱包只使用这些地址索引收到的输出；未指定时，钱包会随机选择地址索引。钱包会尽量避免合并多个地址的输出。<priority> 是交易优先级，优先级越高，手续费越高。优先级从低到高依次为：unimportant、normal、elevated、priority；未指定时使用默认值（参见 \"set priority\"）。<ring_size> 是用于增加不可追踪性的输入数量。可以在付款 ID（如果提供）之前增加 URI_2 或 <address_2> <amount_2> 等参数来同时完成多笔付款。\"subtractfeefrom=\" 列表用于指定从哪些收款目标扣除交易手续费，而不是从找零中扣除。手续费会按比例均摊到所选目标。例如，若对三个目标转账并从第一个和第三个目标扣费，可使用：\"transfer <addr1> 3 <addr2> 0.5 <addr3> 1 subtractfeefrom=0,2\"。假设手续费为 0.1，则余额（含手续费）正好减少 4.5 XMR，addr1 和 addr3 分别收到 2.925 和 0.975 XMR。使用 \"subtractfeefrom=all\" 可将手续费分摊到所有目标。"));
   m_cmd_binder.set_handler("sweep_unmixable",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::sweep_unmixable, _1),
                            tr("使用 ring_size 1 将所有无法混淆的输出发送给自己"));
   m_cmd_binder.set_handler("sweep_all", boost::bind(&simple_wallet::on_command, this, &simple_wallet::sweep_all, _1),
                            tr(USAGE_SWEEP_ALL),
-                           tr("Send all unlocked balance to an address. If the parameter \"index=<N1>[,<N2>,...]\" or \"index=all\" is specified, the wallet sweeps outputs received by those or all address indices, respectively. If omitted, the wallet randomly chooses an address index to be used. If the parameter \"outputs=<N>\" is specified and  N > 0, wallet splits the transaction into N even outputs."));
+                           tr("将全部可用余额发送到指定地址。如果指定 \"index=<N1>[,<N2>,...]\" 或 \"index=all\"，钱包分别清扫这些地址索引或所有地址索引收到的输出。未指定时，钱包会随机选择地址索引。如果指定 \"outputs=<N>\" 且 N > 0，钱包会将交易平均拆分为 N 个输出。"));
   m_cmd_binder.set_handler("sweep_account", boost::bind(&simple_wallet::on_command, this, &simple_wallet::sweep_account, _1),
                            tr(USAGE_SWEEP_ACCOUNT),
-                           tr("Send all unlocked balance from a given account to an address. If the parameter \"index=<N1>[,<N2>,...]\" or \"index=all\" is specified, the wallet sweeps outputs received by those or all address indices, respectively. If omitted, the wallet randomly chooses an address index to be used. If the parameter \"outputs=<N>\" is specified and  N > 0, wallet splits the transaction into N even outputs."));
+                           tr("将指定账户的全部可用余额发送到指定地址。如果指定 \"index=<N1>[,<N2>,...]\" 或 \"index=all\"，钱包分别清扫这些地址索引或所有地址索引收到的输出。未指定时，钱包会随机选择地址索引。如果指定 \"outputs=<N>\" 且 N > 0，钱包会将交易平均拆分为 N 个输出。"));
   m_cmd_binder.set_handler("sweep_below",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::sweep_below, _1),
                            tr(USAGE_SWEEP_BELOW),
-                           tr("Send all unlocked outputs below the threshold to an address."));
+                           tr("将低于指定阈值的全部可用输出发送到指定地址。"));
   m_cmd_binder.set_handler("sweep_single",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::sweep_single, _1),
                            tr(USAGE_SWEEP_SINGLE),
-                           tr("Send a single output of the given key image to an address without change."));
+                           tr("将指定密钥镜像对应的单个输出发送到指定地址，不产生找零。"));
   m_cmd_binder.set_handler("donate",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::donate, _1),
                            tr(USAGE_DONATE),
@@ -3161,11 +3161,11 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("integrated_address",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::print_integrated_address, _1),
                            tr(USAGE_INTEGRATED_ADDRESS),
-                           tr("Encode a payment ID into an integrated address for the current wallet public address (no argument uses a random payment ID), or decode an integrated address to standard address and payment ID"));
+                           tr("将付款 ID 编码到当前钱包公钥地址对应的集成地址中（不提供参数时使用随机付款 ID），或将集成地址解码为标准地址和付款 ID。"));
   m_cmd_binder.set_handler("address_book",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::address_book,_1),
                            tr(USAGE_ADDRESS_BOOK),
-                           tr("Print all entries in the address book, optionally adding/deleting an entry to/from it."));
+                           tr("显示地址簿中的所有条目，也可以添加或删除地址簿条目。"));
   m_cmd_binder.set_handler("save",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::save, _1),
                            tr("保存钱包数据。"));
@@ -3282,19 +3282,19 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("get_tx_proof",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::get_tx_proof, _1),
                            tr(USAGE_GET_TX_PROOF),
-                           tr("Generate a signature proving funds sent to <address> in <txid>, optionally with a challenge string <message>, using either the transaction secret key (when <address> is not your wallet's address) or the view secret key (otherwise), which does not disclose the secret key."));
+                           tr("生成证明 <txid> 中资金已发送到 <address> 的签名，可选提供挑战字符串 <message>。当 <address> 不是您的钱包地址时使用交易私钥，否则使用查看私钥；此过程不会泄露私钥。"));
   m_cmd_binder.set_handler("check_tx_proof",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::check_tx_proof, _1),
                            tr(USAGE_CHECK_TX_PROOF),
-                           tr("Check the proof for funds going to <address> in <txid> with the challenge string <message> if any."));
+                           tr("检查 <txid> 中发送到 <address> 的资金证明；如提供 <message>，同时检查挑战字符串。"));
   m_cmd_binder.set_handler("get_spend_proof",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::get_spend_proof, _1),
                            tr(USAGE_GET_SPEND_PROOF),
-                           tr("Generate a signature proving that you generated <txid> using the spend secret key, optionally with a challenge string <message>."));
+                           tr("使用支出私钥生成证明您创建了 <txid> 的签名，可选提供挑战字符串 <message>。"));
   m_cmd_binder.set_handler("check_spend_proof",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::check_spend_proof, _1),
                            tr(USAGE_CHECK_SPEND_PROOF),
-                           tr("Check a signature proving that the signer generated <txid>, optionally with a challenge string <message>."));
+                           tr("检查证明签名者创建了 <txid> 的签名，可选提供挑战字符串 <message>。"));
   m_cmd_binder.set_handler("get_reserve_proof",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::get_reserve_proof, _1),
                            tr(USAGE_GET_RESERVE_PROOF),
@@ -3304,7 +3304,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("check_reserve_proof",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::check_reserve_proof, _1),
                            tr(USAGE_CHECK_RESERVE_PROOF),
-                           tr("Check a signature proving that the owner of <address> holds at least this much, optionally with a challenge string <message>."));
+                           tr("检查证明 <address> 所有者至少持有指定金额的签名，可选提供挑战字符串 <message>。"));
   m_cmd_binder.set_handler("show_transfers",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::show_transfers, _1),
                            tr(USAGE_SHOW_TRANSFERS),
@@ -3320,31 +3320,31 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("export_transfers",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::export_transfers, _1),
                            tr("export_transfers [in|out|all|pending|failed|pool|coinbase] [index=<N1>[,<N2>,...]] [<min_height> [<max_height>]] [output=<filepath>] [option=<with_keys>]"),
-                           tr("Export to CSV the incoming/outgoing transfers within an optional height range."));
+                           tr("将指定区块高度范围内的入账/出账转账导出为 CSV。"));
   m_cmd_binder.set_handler("unspent_outputs",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::unspent_outputs, _1),
                            tr(USAGE_UNSPENT_OUTPUTS),
-                           tr("Show the unspent outputs of a specified address within an optional amount range."));
+                           tr("显示指定地址在可选金额范围内的未花费输出。"));
   m_cmd_binder.set_handler("rescan_bc",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::rescan_blockchain, _1),
                            tr(USAGE_RESCAN_BC),
-                           tr("Rescan the blockchain from scratch. If \"hard\" is specified, you will lose any information which can not be recovered from the blockchain itself."));
+                           tr("从头重新扫描区块链。指定 \"hard\" 时，会丢失无法仅从区块链本身恢复的信息。"));
   m_cmd_binder.set_handler("set_tx_note",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::set_tx_note, _1),
                            tr(USAGE_SET_TX_NOTE),
-                           tr("Set an arbitrary string note for a <txid>."));
+                           tr("为 <txid> 设置任意字符串备注。"));
   m_cmd_binder.set_handler("get_tx_note",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::get_tx_note, _1),
                            tr(USAGE_GET_TX_NOTE),
-                           tr("Get a string note for a txid."));
+                           tr("获取交易的字符串备注。"));
   m_cmd_binder.set_handler("set_description",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::set_description, _1),
                            tr(USAGE_SET_DESCRIPTION),
-                           tr("Set an arbitrary description for the wallet."));
+                           tr("为钱包设置任意描述。"));
   m_cmd_binder.set_handler("get_description",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::get_description, _1),
                            tr(USAGE_GET_DESCRIPTION),
-                           tr("Get the description of the wallet."));
+                           tr("获取钱包描述。"));
   m_cmd_binder.set_handler("status",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::status, _1),
                            tr("显示钱包状态。"));
@@ -3354,7 +3354,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("sign",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::sign, _1),
                            tr(USAGE_SIGN),
-                           tr("Sign the contents of a file with the given subaddress (or the main address if not specified)"));
+                           tr("使用指定子地址（未指定时使用主地址）对文件内容进行签名。"));
   m_cmd_binder.set_handler("verify",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::verify, _1),
                            tr(USAGE_VERIFY),
@@ -3393,7 +3393,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("payment_id",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::payment_id, _1),
                            tr(USAGE_PAYMENT_ID),
-                           tr("Generate a new random full size payment id (obsolete). These will be unencrypted on the blockchain, see integrated_address for encrypted short payment ids."));
+                           tr("生成新的随机完整长度付款 ID（已废弃）。此类付款 ID 在区块链上不加密；加密的短付款 ID 请使用 integrated_address。"));
   m_cmd_binder.set_handler("fee",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::print_fee_info, _1),
                            tr("显示当前手续费和交易积压信息。"));
