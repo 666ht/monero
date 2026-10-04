@@ -83,11 +83,17 @@ jobs:
           head -n 20 /tmp/wallet-help.txt
           ccache --show-stats
 
+      - name: Verify Chinese Bash wrapper
+        run: |
+          bash -n monero-wallet-cli-zh.sh
+          test -s monero-wallet-cli-zh.sh
+
       - name: Package Android ARM64 CLI
         run: |
           mkdir -p artifact
           cp build-android-arm64/bin/monero-wallet-cli artifact/monero-wallet-cli-android-arm64
-          chmod +x artifact/monero-wallet-cli-android-arm64
+          cp monero-wallet-cli-zh.sh artifact/monero-wallet-cli-zh.sh
+          chmod +x artifact/monero-wallet-cli-android-arm64 artifact/monero-wallet-cli-zh.sh
           file artifact/monero-wallet-cli-android-arm64
           sha256sum artifact/monero-wallet-cli-android-arm64 > artifact/SHA256SUMS.txt
 
