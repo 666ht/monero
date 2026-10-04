@@ -6628,7 +6628,7 @@ bool simple_wallet::transfer_main(const std::vector<std::string> &args_, bool ca
       if(!ok || 0 == de.amount)
       {
         fail_msg_writer() << tr("金额错误：") << local_args[i] << ' ' << local_args[i + 1] <<
-          ", " << tr("expected number from 0 to ") << print_money(std::numeric_limits<uint64_t>::max());
+          ", " << tr("期望数字范围为 0 到 ") << print_money(std::numeric_limits<uint64_t>::max());
         return false;
       }
       de.original = local_args[i];
@@ -7144,7 +7144,7 @@ bool simple_wallet::sweep_main(uint32_t account, uint64_t below, const std::vect
 
     if(!r && local_args.size() == 3)
     {
-      fail_msg_writer() << tr("payment id has invalid format, expected 16 or 64 character hex string: ") << payment_id_str;
+      fail_msg_writer() << tr("付款 ID 格式无效，应为 16 或 64 个十六进制字符：") << payment_id_str;
       print_usage();
       return true;
     }
@@ -7622,7 +7622,7 @@ bool simple_wallet::donate(const std::vector<std::string> &args_)
   }
   else
   { 
-    fail_msg_writer() << tr("金额错误：") << local_args.back() << ", " << tr("expected number from 0 to ") << print_money(std::numeric_limits<uint64_t>::max());
+    fail_msg_writer() << tr("金额错误：") << local_args.back() << ", " << tr("期望数字范围为 0 到 ") << print_money(std::numeric_limits<uint64_t>::max());
     return true;
   }
   // push back address, amount
@@ -7728,7 +7728,7 @@ bool simple_wallet::accept_loaded_tx(const std::function<size_t()> get_num_txes,
       }
       if (it->second.second < cd.change_dts.amount)
       {
-        fail_msg_writer() << tr("Claimed change is larger than payment to the change address");
+        fail_msg_writer() << tr("声称的找零金额大于发送到找零地址的付款金额");
         return false;
       }
       if (cd.change_dts.amount > 0)
@@ -7759,7 +7759,7 @@ bool simple_wallet::accept_loaded_tx(const std::function<size_t()> get_num_txes,
     {
       if (!dest_string.empty())
         dest_string += ", ";
-      dest_string += (boost::format(tr("sending %s to %s")) % print_money(i->second.second) % i->second.first).str();
+      dest_string += (boost::format(tr("正在将 %s 发送到 %s")) % print_money(i->second.second) % i->second.first).str();
     }
     else
       ++n_dummy_outputs;
@@ -7769,17 +7769,17 @@ bool simple_wallet::accept_loaded_tx(const std::function<size_t()> get_num_txes,
   {
     if (!dest_string.empty())
       dest_string += ", ";
-    dest_string += std::to_string(n_dummy_outputs) + tr(" dummy output(s)");
+    dest_string += std::to_string(n_dummy_outputs) + tr(" 个虚拟输出");
   }
   if (dest_string.empty())
-    dest_string = tr("with no destinations");
+    dest_string = tr("没有收款目标");
 
   std::string change_string;
   if (change > 0)
   {
     const tools::wallet2::tx_construction_data &cd = get_tx(first_known_non_zero_change_index);
     std::string address = get_account_address_as_str(m_wallet->nettype(), cd.subaddr_account > 0, cd.change_dts.addr);
-    change_string += (boost::format(tr("%s change to %s")) % print_money(change) % address).str();
+    change_string += (boost::format(tr("%s 找零发送到 %s")) % print_money(change) % address).str();
   }
   else
     change_string += tr("无找零");
@@ -7991,7 +7991,7 @@ bool simple_wallet::set_tx_key(const std::vector<std::string> &args_)
     {
       if (!info.is_subaddress)
       {
-        fail_msg_writer() << tr("Last argument is an address, but not a subaddress");
+        fail_msg_writer() << tr("最后一个参数是地址，但不是子地址");
         return true;
       }
       single_destination_subaddress = info.address;
@@ -8012,7 +8012,7 @@ bool simple_wallet::set_tx_key(const std::vector<std::string> &args_)
   {
     if (!epee::string_tools::hex_to_pod(local_args[1].substr(0, 64), tx_key))
     {
-      fail_msg_writer() << tr("failed to parse tx_key");
+      fail_msg_writer() << tr("解析交易密钥失败");
       return true;
     }
     while(true)
@@ -8023,14 +8023,14 @@ bool simple_wallet::set_tx_key(const std::vector<std::string> &args_)
       additional_tx_keys.resize(additional_tx_keys.size() + 1);
       if (!epee::string_tools::hex_to_pod(local_args[1].substr(0, 64), additional_tx_keys.back()))
       {
-        fail_msg_writer() << tr("failed to parse tx_key");
+        fail_msg_writer() << tr("解析交易密钥失败");
         return true;
       }
     }
   }
   catch (const std::out_of_range &e)
   {
-    fail_msg_writer() << tr("failed to parse tx_key");
+    fail_msg_writer() << tr("解析交易密钥失败");
     return true;
   }
 
@@ -8120,7 +8120,7 @@ bool simple_wallet::check_tx_key(const std::vector<std::string> &args_)
   std::vector<crypto::secret_key> additional_tx_keys;
   if(!epee::string_tools::hex_to_pod(local_args[1].substr(0, 64), tx_key))
   {
-    fail_msg_writer() << tr("failed to parse tx key");
+    fail_msg_writer() << tr("解析交易密钥失败");
     return true;
   }
   local_args[1] = local_args[1].substr(64);
@@ -8129,7 +8129,7 @@ bool simple_wallet::check_tx_key(const std::vector<std::string> &args_)
     additional_tx_keys.resize(additional_tx_keys.size() + 1);
     if(!epee::string_tools::hex_to_pod(local_args[1].substr(0, 64), additional_tx_keys.back()))
     {
-      fail_msg_writer() << tr("failed to parse tx key");
+      fail_msg_writer() << tr("解析交易密钥失败");
       return true;
     }
     local_args[1] = local_args[1].substr(64);
@@ -10630,7 +10630,7 @@ bool simple_wallet::choose_mms_processing(const std::vector<mms::processing_data
     switch (data.processing)
     {
     case mms::message_processing::sign_tx:
-      text += tr("Sign tx");
+      text += tr("签署交易");
       break;
     case mms::message_processing::send_tx:
     {
@@ -10638,18 +10638,18 @@ bool simple_wallet::choose_mms_processing(const std::vector<mms::processing_data
       ms.get_message_by_id(data.message_ids[0], m);
       if (m.type == mms::message_type::fully_signed_tx)
       {
-        text += tr("Send the tx for submission to ");
+        text += tr("将交易发送到 ");
       }
       else
       {
-        text += tr("Send the tx for signing to ");
+        text += tr("将交易发送到 ");
       }
       mms::authorized_signer signer = ms.get_signer(data.receiving_signer_index);
       text += ms.signer_to_string(signer, 50);
       break;
     }
     case mms::message_processing::submit_tx:
-      text += tr("Submit tx");
+      text += tr("提交交易");
       break;
     default:
       text += tr("未知");
