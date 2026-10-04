@@ -2145,7 +2145,7 @@ bool simple_wallet::public_nodes(const std::vector<std::string> &args)
     }
 
     const uint64_t now = time(NULL);
-    message_writer() << boost::format("%32s %16s") % tr("address") % tr("最后出现");
+    message_writer() << boost::format("%32s %16s") % tr("地址") % tr("最后出现");
     for (const auto &node: nodes)
     {
       const std::string last_seen = node.last_seen == 0 ? tr("从未") : tools::get_human_readable_timespan(std::chrono::seconds(now - node.last_seen));
@@ -3695,7 +3695,7 @@ bool simple_wallet::set_variable(const std::vector<std::string> &args)
     CHECK_SIMPLE_VARIABLE("unit", set_unit, tr("monero, millinero, micronero, nanonero, piconero"));
     CHECK_SIMPLE_VARIABLE("max-reorg-depth", set_max_reorg_depth, tr("unsigned integer"));
     CHECK_SIMPLE_VARIABLE("min-outputs-count", set_min_output_count, tr("unsigned integer"));
-    CHECK_SIMPLE_VARIABLE("min-outputs-value", set_min_output_value, tr("amount"));
+    CHECK_SIMPLE_VARIABLE("min-outputs-value", set_min_output_value, tr("金额"));
     CHECK_SIMPLE_VARIABLE("merge-destinations", set_merge_destinations, tr("0 or 1"));
     CHECK_SIMPLE_VARIABLE("confirm-backlog", set_confirm_backlog, tr("0 or 1"));
     CHECK_SIMPLE_VARIABLE("confirm-backlog-threshold", set_confirm_backlog_threshold, tr("unsigned integer"));
@@ -3707,8 +3707,8 @@ bool simple_wallet::set_variable(const std::vector<std::string> &args)
     CHECK_SIMPLE_VARIABLE("subaddress-lookahead", set_subaddress_lookahead, tr("<major>:<minor>"));
     CHECK_SIMPLE_VARIABLE("segregation-height", set_segregation_height, tr("unsigned integer"));
     CHECK_SIMPLE_VARIABLE("ignore-fractional-outputs", set_ignore_fractional_outputs, tr("0 or 1"));
-    CHECK_SIMPLE_VARIABLE("ignore-outputs-above", set_ignore_outputs_above, tr("amount"));
-    CHECK_SIMPLE_VARIABLE("ignore-outputs-below", set_ignore_outputs_below, tr("amount"));
+    CHECK_SIMPLE_VARIABLE("ignore-outputs-above", set_ignore_outputs_above, tr("金额"));
+    CHECK_SIMPLE_VARIABLE("ignore-outputs-below", set_ignore_outputs_below, tr("金额"));
     CHECK_SIMPLE_VARIABLE("track-uses", set_track_uses, tr("0 or 1"));
     CHECK_SIMPLE_VARIABLE("background-sync", setup_background_sync, tr("off（默认）；reuse-wallet-password（使用钱包密码加密后台缓存）；custom-background-password（使用自定义后台密码加密后台缓存）"));
     CHECK_SIMPLE_VARIABLE("show-wallet-name-when-locked", set_show_wallet_name_when_locked, tr("1 or 0"));
@@ -5601,7 +5601,7 @@ void simple_wallet::on_money_received(uint64_t height, const crypto::hash &txid,
   }
   message_writer(console_color_green, false) << "\r" <<
     tr("高度 ") << height << ", " <<
-    tr("txid ") << txid << ", " <<
+    tr("交易 ID ") << txid << ", " <<
     print_money(amount - burnt) << burn.str() << ", " <<
     tr("idx ") << subaddr_index;
 
@@ -5652,8 +5652,8 @@ void simple_wallet::on_money_spent(uint64_t height, const crypto::hash &txid, co
     return;
   message_writer(console_color_magenta, false) << "\r" <<
     tr("高度 ") << height << ", " <<
-    tr("txid ") << txid << ", " <<
-    tr("spent ") << print_money(amount) << ", " <<
+    tr("交易 ID ") << txid << ", " <<
+    tr("已花费 ") << print_money(amount) << ", " <<
     tr("idx ") << subaddr_index;
   if (m_auto_refresh_refreshing)
     m_cmd_binder.print_prompt();
@@ -5907,7 +5907,7 @@ bool simple_wallet::show_balance_unlocked(bool detailed)
   if (!detailed || balance_per_subaddress.empty())
     return true;
   success_msg_writer() << tr("按地址显示余额：");
-  success_msg_writer() << boost::format("%15s %21s %21s %7s %21s") % tr("Address") % tr("余额") % tr("可用余额") % tr("输出") % tr("标签");
+  success_msg_writer() << boost::format("%15s %21s %21s %7s %21s") % tr("地址") % tr("余额") % tr("可用余额") % tr("输出") % tr("标签");
   std::vector<tools::wallet2::transfer_details> transfers;
   m_wallet->get_transfers(transfers);
   for (const auto& i : balance_per_subaddress)
@@ -6006,7 +6006,7 @@ bool simple_wallet::show_incoming_transfers(const std::vector<std::string>& args
         std::string verbose_string;
         if (verbose)
           verbose_string = (boost::format("%68s%68s") % tr("公钥") % tr("密钥镜像")).str();
-        message_writer() << boost::format("%21s%8s%12s%8s%16s%68s%16s%s") % tr("amount") % tr("spent") % tr("unlocked") % tr("ringct") % tr("全局索引") % tr("tx id") % tr("地址索引") % verbose_string;
+        message_writer() << boost::format("%21s%8s%12s%8s%16s%68s%16s%s") % tr("金额") % tr("已花费") % tr("已解锁") % tr("RingCT") % tr("全局索引") % tr("tx id") % tr("地址索引") % verbose_string;
       }
       std::string extra_string;
       if (verbose)
@@ -6028,7 +6028,7 @@ bool simple_wallet::show_incoming_transfers(const std::vector<std::string>& args
         boost::format("%21s%8s%12s%8s%16u%68s%16u%s") %
         print_money(td.amount()) %
         (td.m_spent ? tr("T") : tr("F")) %
-        (m_wallet->frozen(td) ? tr("[frozen]") : m_wallet->is_transfer_unlocked(td) ? tr("unlocked") : tr("已锁定")) %
+        (m_wallet->frozen(td) ? tr("[已冻结]") : m_wallet->is_transfer_unlocked(td) ? tr("已解锁") : tr("已锁定")) %
         (td.is_rct() ? tr("RingCT") : tr("-")) %
         td.m_global_output_index %
         td.m_txid %
@@ -6074,7 +6074,7 @@ bool simple_wallet::show_payments(const std::vector<std::string> &args)
   PAUSE_READLINE();
 
   message_writer() << boost::format("%68s%68s%12s%21s%16s%16s") %
-    tr("payment") % tr("transaction") % tr("height") % tr("amount") % tr("unlock time") % tr("地址索引");
+    tr("付款") % tr("交易") % tr("height") % tr("金额") % tr("解锁时间") % tr("地址索引");
 
   bool payments_found = false;
   for(std::string arg : args)
@@ -8819,7 +8819,7 @@ bool simple_wallet::export_transfers(const std::vector<std::string>& args_)
   // header
   file <<
       boost::format("%8.8s,%9.9s,%8.8s,%25.25s,%20.20s,%20.20s,%64.64s,%16.16s,%14.14s,%106.106s,%20.20s,%s,%s,%s") %
-      tr("区块") % tr("方向") % tr("unlocked") % tr("时间戳") % tr("交易金额") % tr("余额变化") % tr("哈希") % tr("支付 ID") % tr("手续费") % tr("目标地址") % tr("目标金额") % tr("索引") % tr("备注") % tr("交易密钥")
+      tr("区块") % tr("方向") % tr("已解锁") % tr("时间戳") % tr("交易金额") % tr("余额变化") % tr("哈希") % tr("支付 ID") % tr("手续费") % tr("目标地址") % tr("目标金额") % tr("索引") % tr("备注") % tr("交易密钥")
       << std::endl;
 
   uint64_t running_balance = 0;
@@ -9408,7 +9408,7 @@ void simple_wallet::print_accounts()
     print_accounts("");
 
   if (num_untagged_accounts < m_wallet->get_num_subaddress_accounts())
-    success_msg_writer() << tr("\nGrand total:\n  Balance: ") << print_money(m_wallet->balance_all(false)) << tr(", unlocked balance: ") << print_money(m_wallet->unlocked_balance_all(false));
+    success_msg_writer() << tr("\nGrand total:\n  Balance: ") << print_money(m_wallet->balance_all(false)) << tr("，可用余额：") << print_money(m_wallet->unlocked_balance_all(false));
 }
 //----------------------------------------------------------------------------------------------------
 void simple_wallet::print_accounts(const std::string& tag)
