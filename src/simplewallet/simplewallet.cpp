@@ -3482,7 +3482,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("mms note",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_NOTE),
-                           tr("Send a one-line message to an authorized signer, identified by its label, or show any waiting unread notes"));
+                           tr("向指定标签的授权签名者发送一行消息，或显示等待中的未读备注。"));
   m_cmd_binder.set_handler("mms show",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_SHOW),
@@ -3500,7 +3500,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("mms start_auto_config",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_START_AUTO_CONFIG),
-                           tr("Start auto-config at the auto-config manager's wallet by issuing auto-config tokens and optionally set others' labels"));
+                           tr("在自动配置管理者的钱包中启动自动配置，通过生成令牌进行配置，并可选择设置其他签名者的标签。"));
   m_cmd_binder.set_handler("mms config_checksum",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_CONFIG_CHECKSUM),
@@ -3508,11 +3508,11 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("mms stop_auto_config",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_STOP_AUTO_CONFIG),
-                           tr("Delete any auto-config tokens and abort a auto-config process"));
+                           tr("删除所有自动配置令牌并中止自动配置流程。"));
   m_cmd_binder.set_handler("mms auto_config",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_AUTO_CONFIG),
-                           tr("Start auto-config by using the token received from the auto-config manager"));
+                           tr("使用从自动配置管理者处收到的令牌启动自动配置。"));
   m_cmd_binder.set_handler("print_ring",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::print_ring, _1),
                            tr(USAGE_PRINT_RING),
@@ -3522,27 +3522,27 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("set_ring",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::set_ring, _1),
                            tr(USAGE_SET_RING),
-                           tr("Set the ring used for a given key image, so it can be reused in a fork"));
+                           tr("为指定密钥镜像设置使用的环，以便在分叉中重复使用。"));
   m_cmd_binder.set_handler("unset_ring",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::unset_ring, _1),
                            tr(USAGE_UNSET_RING),
-                           tr("Unsets the ring used for a given key image or transaction"));
+                           tr("取消指定密钥镜像或交易所使用的环设置。"));
   m_cmd_binder.set_handler("save_known_rings",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::save_known_rings, _1),
                            tr(USAGE_SAVE_KNOWN_RINGS),
-                           tr("Save known rings to the shared rings database"));
+                           tr("将已知环保存到共享环数据库。"));
   m_cmd_binder.set_handler("freeze",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::freeze, _1),
                            tr(USAGE_FREEZE),
-                           tr("Freeze a single output by key image so it will not be used"));
+                           tr("根据密钥镜像冻结单个输出，使其不会被使用。"));
   m_cmd_binder.set_handler("thaw",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::thaw, _1),
                            tr(USAGE_THAW),
-                           tr("Thaw a single output by key image so it may be used again"));
+                           tr("根据密钥镜像解冻单个输出，使其可以再次使用。"));
   m_cmd_binder.set_handler("frozen",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::frozen, _1),
                            tr(USAGE_FROZEN),
-                           tr("Checks whether a given output is currently frozen by key image"));
+                           tr("检查指定输出是否已根据密钥镜像冻结。"));
   m_cmd_binder.set_handler("lock",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::lock, _1),
                            tr(USAGE_LOCK),
