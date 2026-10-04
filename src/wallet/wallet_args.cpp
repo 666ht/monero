@@ -104,9 +104,9 @@ namespace wallet_args
     _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
 
-    const command_line::arg_descriptor<std::string> arg_log_level = {"log-level", "0-4 or categories", ""};
-    const command_line::arg_descriptor<std::size_t> arg_max_log_file_size = {"max-log-file-size", "Specify maximum log file size [B]", MAX_LOG_FILE_SIZE};
-    const command_line::arg_descriptor<std::size_t> arg_max_log_files = {"max-log-files", "Specify maximum number of rotated log files to be saved (no limit by setting to 0)", MAX_LOG_FILES};
+    const command_line::arg_descriptor<std::string> arg_log_level = {"log-level", "0-4 或类别", ""};
+    const command_line::arg_descriptor<std::size_t> arg_max_log_file_size = {"max-log-file-size", "指定最大日志文件大小 [B]", MAX_LOG_FILE_SIZE};
+    const command_line::arg_descriptor<std::size_t> arg_max_log_files = {"max-log-files", "指定最多保存的轮换日志文件数量（设置为 0 表示不限制）", MAX_LOG_FILES};
     const command_line::arg_descriptor<uint32_t> arg_max_concurrency = {"max-concurrency", wallet_args::tr("并行任务使用的最大线程数"), DEFAULT_MAX_CONCURRENCY};
     const command_line::arg_descriptor<std::string> arg_log_file = {"log-file", wallet_args::tr("指定日志文件"), ""};
     const command_line::arg_descriptor<std::string> arg_config_file = {"config-file", wallet_args::tr("配置文件"), "", true};
@@ -144,7 +144,7 @@ namespace wallet_args
       {
         Print(print) << "Monero '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL;
         Print(print) << wallet_args::tr("这是 Monero 命令行钱包。需要连接到 Monero 守护进程才能正常工作。") << ENDL;
-        Print(print) << wallet_args::tr("Usage:") << ENDL << "  " << usage;
+        Print(print) << wallet_args::tr("用法：") << ENDL << "  " << usage;
         Print(print) << desc_all;
         should_terminate = true;
         return true;
