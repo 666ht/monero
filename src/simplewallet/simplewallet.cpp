@@ -3943,7 +3943,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
 
   if((!m_generate_new.empty()) + (!m_wallet_file.empty()) + (!m_generate_from_device.empty()) + (!m_generate_from_view_key.empty()) + (!m_generate_from_spend_key.empty()) + (!m_generate_from_keys.empty()) + (!m_generate_from_multisig_keys.empty()) + (!m_generate_from_json.empty()) > 1)
   {
-    fail_msg_writer() << tr("can't specify more than one of --generate-new-wallet=\"wallet_name\", --wallet-file=\"wallet_name\", --generate-from-view-key=\"wallet_name\", --generate-from-spend-key=\"wallet_name\", --generate-from-keys=\"wallet_name\", --generate-from-multisig-keys=\"wallet_name\", --generate-from-json=\"jsonfilename\" and --generate-from-device=\"wallet_name\"");
+    fail_msg_writer() << tr("不能同时指定多个钱包生成参数：--generate-new-wallet=\"wallet_name\"、--wallet-file=\"wallet_name\"、--generate-from-view-key=\"wallet_name\"、--generate-from-spend-key=\"wallet_name\"、--generate-from-keys=\"wallet_name\"、--generate-from-multisig-keys=\"wallet_name\"、--generate-from-json=\"jsonfilename\"、--generate-from-device=\"wallet_name\"");
     return false;
   }
   else if (m_generate_new.empty() && m_wallet_file.empty() && m_generate_from_device.empty() && m_generate_from_view_key.empty() && m_generate_from_spend_key.empty() && m_generate_from_keys.empty() && m_generate_from_multisig_keys.empty() && m_generate_from_json.empty())
@@ -5147,9 +5147,9 @@ boost::optional<epee::wipeable_string> simple_wallet::open_wallet(const boost::p
   }
   success_msg_writer() <<
     "**********************************************************************\n" <<
-    tr("Use the \"help\" command to see a simplified list of available commands.\n") <<
-    tr("Use \"help all\" to see the list of all available commands.\n") <<
-    tr("Use \"help <command>\" to see a command's documentation.\n") <<
+    tr("使用 \"help\" 命令查看简化的可用命令列表。\n") <<
+    tr("使用 \"help all\" 查看所有可用命令列表。\n") <<
+    tr("使用 \"help <command>\" 查看指定命令的文档。\n") <<
     "**********************************************************************";
   return password;
 }
@@ -5522,7 +5522,7 @@ bool simple_wallet::set_daemon(const std::vector<std::string>& args)
       }
 
       if (parsed.schema != "https")
-        message_writer(console_color_red) << tr("警告：connecting to a non-local daemon without SSL, passive adversaries will be able to spy on you.");
+        message_writer(console_color_red) << tr("警告：连接非本地守护进程且未启用 SSL 时，被动攻击者可能监视您的通信。");
     }
 
     LOCK_IDLE_SCOPE();
@@ -7002,7 +7002,7 @@ bool simple_wallet::sweep_unmixable(const std::vector<std::string> &args_)
   catch (const tools::error::not_enough_unlocked_money& e)
   {
     fail_msg_writer() << tr("可用余额不足");
-    std::string accepted = input_line((boost::format(tr("Discarding %s of unmixable outputs that cannot be spent, which can be undone by \"rescan_spent\".  确认继续吗？")) % print_money(e.available())).str(), true);
+    std::string accepted = input_line((boost::format(tr("将丢弃无法花费的不可混淆输出 %s，此操作可以通过 \"rescan_spent\" 撤销。确认继续吗？")) % print_money(e.available())).str(), true);
     if (std::cin.eof())
       return true;
     if (command_line::is_yes(accepted))
@@ -7785,7 +7785,7 @@ bool simple_wallet::accept_loaded_tx(const std::function<size_t()> get_num_txes,
     change_string += tr("无找零");
 
   uint64_t fee = amount - amount_to_dests;
-  std::string prompt_str = (boost::format(tr("Loaded %lu transactions, for %s, fee %s, %s, %s, with min ring size %lu, %s. %s确认继续吗？")) % (unsigned long)get_num_txes() % print_money(amount) % print_money(fee) % dest_string % change_string % (unsigned long)min_ring_size % payment_id_string % extra_message).str();
+  std::string prompt_str = (boost::format(tr("已加载 %lu 笔交易，金额 %s，手续费 %s，%s，%s，最小环大小 %lu，%s。确认继续吗？")) % (unsigned long)get_num_txes() % print_money(amount) % print_money(fee) % dest_string % change_string % (unsigned long)min_ring_size % payment_id_string % extra_message).str();
   return command_line::is_yes(input_line(prompt_str, true));
 }
 //----------------------------------------------------------------------------------------------------
